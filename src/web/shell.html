@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SKZ - Game template</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { background: #0b0f14; overflow: hidden; }
+    #game-canvas { width: 100vw; height: 100vh; display: block; }
+  </style>
+</head>
+
+<body>
+  <canvas id="game-canvas" tabindex="0"
+    oncontextmenu="event.preventDefault()"
+    onmousedown="event.target.focus()"></canvas>
+
+  <script src="odin.js"></script>
+  <script>
+    (() => {
+      let wasm = null;
+
+      const odinMemory = new odin.WasmMemoryInterface();
+      odinMemory.setIntSize(4);
+      const odinImports = odin.setupDefaultImports(odinMemory);
+
+      function startLoop() {
+        const wrapperTick = Module._web_tick;
+
+        let prev;
+        const frame = (ts) => {
+          if (prev === undefined) prev = ts;
+          const dt = (ts - prev) / 1000.0;
+          prev = ts;
+
+          try {
+            wrapperTick(dt);
+          } catch (err) {
+            console.error("Module._tick failed:", err);
+          }
+
+          requestAnimationFrame(frame);
+        };
+
+        requestAnimationFrame(frame);
+      }
+
+      window.Module = {
+        canvas: (() => {
+          const c = document.getElementById("game-canvas");
+          c.addEventListener("webglcontextlost", (e) => e.preventDefault(), false);
+          return c;
+        })(),
+
+        locateFile: (path) => (path.endsWith(".wasm") ? "game.wasm" : path),
+
+        noExitRuntime: true,
+        noInitialRun: true,
+
+        instantiateWasm: (imports, successCallback) => {
+          const merged = { ...odinImports, ...imports };
+
+          const instantiate = (res) => {
+            wasm = res.instance.exports;
+            odinMemory.setExports(wasm);
+            if (wasm.memory) odinMemory.setMemory(wasm.memory);
+
+            Module.wasmExports = wasm;
+
+            successCallback(res.instance, res.module);
+            return {};
+          };
+
+          return WebAssembly.instantiateStreaming(fetch("game.wasm"), merged)
+            .then(instantiate)
+            .catch(() =>
+              fetch("game.wasm")
+                .then((r) => r.arrayBuffer())
+                .then((buf) => WebAssembly.instantiate(buf, merged))
+                .then(instantiate)
+            );
+        },
+
+        onMemoryGrowth() {
+          if (wasm && wasm.memory) odinMemory.setMemory(wasm.memory);
+        },
+
+        onRuntimeInitialized: () => {
+          const e = wasm || odinMemory.getExports();
+          if (!e) {
+            console.error("No wasm exports available");
+            return;
+          }
+
+          requestAnimationFrame(() => {
+            if (Module._emscripten_stack_init) Module._emscripten_stack_init();
+            Module._web_init && Module._web_init();
+            startLoop();
+          });
+
+        },
+
+        print: (t) => console.log(t),
+        printErr: (t) => console.error(t),
+      };
+    })();
+  </script>
+
+  <script src="game.js"></script>
+
+</body>
+</html>
