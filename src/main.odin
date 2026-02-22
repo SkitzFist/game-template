@@ -4,20 +4,20 @@ import "base:runtime"
 import "core:log"
 import "core:mem"
 
-//debug
-import "core:fmt"
-
+import rl "vendor:raylib"
 
 tracking_allocator: mem.Tracking_Allocator
-
-MEM_TRACK :: #config(MEM_TRACK, true)
-PLATFORM :: #config(PLATFORM, "DESKTOP")
 
 main :: proc() {
 
 	context = init()
+	init_window()
 
-	tick(0.016)
+
+	for !rl.WindowShouldClose() {
+		//TODO should do my own dt calc
+		tick(rl.GetFrameTime())
+	}
 
 	shutdown()
 }
@@ -42,9 +42,26 @@ init :: proc() -> runtime.Context {
 	return context
 }
 
+init_window :: proc() {
+	rl.SetConfigFlags({.BORDERLESS_WINDOWED_MODE, .WINDOW_MAXIMIZED, .WINDOW_RESIZABLE})
+	monitor: i32 = 0
+	width := rl.GetMonitorWidth(monitor)
+	height := rl.GetMonitorHeight(monitor)
+	rl.InitWindow(width, height, PROJECT_NAME)
+}
+
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
-	log.info("dt:", dt, "\tfps:", fps)
+
+	// TODO should let
+	// run input systems
+	// run update systems
+
+	rl.BeginDrawing()
+	rl.ClearBackground(rl.RAYWHITE)
+	// run render systems
+	// run render_ui systems
+	rl.EndDrawing()
 }
 
 shutdown :: proc() {

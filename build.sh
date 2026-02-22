@@ -15,6 +15,7 @@ if [ $PLATFORM == "WEB" ]; then
     odin build src/ \
         -target:js_wasm32 \
         -build-mode:obj \
+        -define:RAYLIB_WASM_LIB=env.o \
         -define:PLATFORM=WEB \
         -out:$OUT_DIR/game.wasm.o \
         -o:speed
@@ -22,16 +23,14 @@ if [ $PLATFORM == "WEB" ]; then
     ODIN_PATH=$(odin root)
 
     cp ${ODIN_PATH}/core/sys/wasm/js/odin.js $OUT_DIR/odin.js
-    files="$OUT_DIR/game.wasm.o ${ODIN_PATH}/vendor/raylib/wasm/libraylib.a ${ODIN_PATH}/vendor/raylib/wasm/libraygui.a"
+    files="$OUT_DIR/game.wasm.o ${ODIN_PATH}/vendor/raylib/wasm/libraylib.a"
     flags="-sUSE_GLFW=3 -sSTACK_SIZE=2097152 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432 -sWARN_ON_UNDEFINED_SYMBOLS=0 -sASSERTIONS=2 -sEXIT_RUNTIME=0 -sNO_EXIT_RUNTIME=1"
 
     emcc -o $OUT_DIR/game.js $files $flags
     cp src/web/shell.html $OUT_DIR/game.html
     rm $OUT_DIR/game.wasm.o
 
-    echo "Web build created in ${OUT_DIR}"
-
-    ./run.sh
+    echo "Build created in ${OUT_DIR}"
 elif [ $PLATFORM == "DESKTOP" ]; then
     OUT_DIR="build/desktop"
     mkdir -p $OUT_DIR
@@ -39,8 +38,9 @@ elif [ $PLATFORM == "DESKTOP" ]; then
     odin build src/ \
         -define:PLATFORM=DESKTOP \
         -out:$OUT_DIR/game \
-        .o:speed
+        -o:speed
 
-    echo "Desktop build created in ${OUT_DIR}"
-    ./build/desktop/game
+    echo "Build created in ${OUT_DIR}"
 fi
+
+./run.sh $PLATFORM

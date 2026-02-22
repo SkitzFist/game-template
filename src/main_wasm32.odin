@@ -8,12 +8,14 @@ web_context: runtime.Context
 web_init :: proc "c" () {
 	context = init()
 	web_context = context
+
+	init_window()
 }
 
 @(export)
 web_tick :: proc "c" (dt: f32) {
 	context = web_context
-	tick(dt)
+	// tick(dt)
 }
 
 @(export)
