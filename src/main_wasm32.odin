@@ -10,12 +10,13 @@ web_init :: proc "c" () {
 	web_context = context
 
 	init_window()
+	test()
 }
 
 @(export)
 web_tick :: proc "c" (dt: f32) {
 	context = web_context
-	// tick(dt)
+	tick(dt)
 }
 
 @(export)

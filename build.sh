@@ -10,26 +10,14 @@ if [ $PLATFORM == "WEB" ]; then
     OUT_DIR="build/web"
     mkdir -p $OUT_DIR
 
-    export EMSDK_QUIET=1
-
     odin build src/ \
         -target:js_wasm32 \
-        -build-mode:obj \
-        -define:RAYLIB_WASM_LIB=env.o \
         -define:PLATFORM=WEB \
-        -out:$OUT_DIR/game.wasm.o \
+        -out:$OUT_DIR/game \
         -o:speed
 
-    ODIN_PATH=$(odin root)
-
-    cp ${ODIN_PATH}/core/sys/wasm/js/odin.js $OUT_DIR/odin.js
-    files="$OUT_DIR/game.wasm.o ${ODIN_PATH}/vendor/raylib/wasm/libraylib.a"
-    flags="-sUSE_GLFW=3 -sSTACK_SIZE=2097152 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432 -sWARN_ON_UNDEFINED_SYMBOLS=0 -sASSERTIONS=2 -sEXIT_RUNTIME=0 -sNO_EXIT_RUNTIME=1"
-
-    emcc -o $OUT_DIR/game.js $files $flags
-    cp src/web/shell.html $OUT_DIR/game.html
-    rm $OUT_DIR/game.wasm.o
-
+    cp src/web/game.html $OUT_DIR/game.html
+    cp src/web/game.js $OUT_DIR/game.js
     echo "Build created in ${OUT_DIR}"
 elif [ $PLATFORM == "DESKTOP" ]; then
     OUT_DIR="build/desktop"

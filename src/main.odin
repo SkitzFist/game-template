@@ -4,19 +4,18 @@ import "base:runtime"
 import "core:log"
 import "core:mem"
 
-import rl "vendor:raylib"
+import be "render_backend"
 
 tracking_allocator: mem.Tracking_Allocator
 
 main :: proc() {
-
 	context = init()
 	init_window()
 
 
-	for !rl.WindowShouldClose() {
+	for !be.should_close() {
 		//TODO should do my own dt calc
-		tick(rl.GetFrameTime())
+		tick(0.016)
 	}
 
 	shutdown()
@@ -28,7 +27,7 @@ init :: proc() -> runtime.Context {
 	context.logger = log.create_console_logger(
 		opt = {.Level, .Time, .Short_File_Path, .Line, .Procedure, .Terminal_Color},
 	)
-	log.info("[MAIN] Init:", PLATFORM)
+	log.info("[MAIN] Init:", ODIN_OS, ODIN_ARCH)
 
 	// Mem Tracker
 	when MEM_TRACK {
@@ -43,25 +42,22 @@ init :: proc() -> runtime.Context {
 }
 
 init_window :: proc() {
-	rl.SetConfigFlags({.BORDERLESS_WINDOWED_MODE, .WINDOW_MAXIMIZED, .WINDOW_RESIZABLE})
-	monitor: i32 = 0
-	width := rl.GetMonitorWidth(monitor)
-	height := rl.GetMonitorHeight(monitor)
-	rl.InitWindow(width, height, PROJECT_NAME)
+	be.init_window(1920, 1280, PROJECT_NAME)
 }
 
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
 
+	log.info("fps:", fps)
 	// TODO should let
 	// run input systems
 	// run update systems
 
-	rl.BeginDrawing()
-	rl.ClearBackground(rl.RAYWHITE)
+	be.begin_drawing()
+	be.clear_background(245, 245, 245, 245)
 	// run render systems
 	// run render_ui systems
-	rl.EndDrawing()
+	be.end_drawing()
 }
 
 shutdown :: proc() {
