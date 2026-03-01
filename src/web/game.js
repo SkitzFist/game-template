@@ -1,3 +1,5 @@
+import { create_game_env } from "./game_env.js"
+
 const wasmUrl = "./game.wasm"
 
 let wasmMemory = null
@@ -32,7 +34,12 @@ function startGame(wasm) {
 
   let prev;
   const tick = (ts) => {
-    if (prev === undefined) prev = ts;
+    if (prev === undefined) {
+      prev = ts;
+      requestAnimationFrame(tick)
+      return
+    }
+
     const dt = (ts - prev ) / 1000.0;
     prev = ts;
 
@@ -55,11 +62,8 @@ async function loadWasm() {
 
   const imports = {
     odin_env: get_odin_env(),
-    env: {
-      test() {
-        console.log("TEST");
-      },
-    },
+    env: {},
+    game_env: create_game_env(() => wasmMemory),
   };
 
   console.log("imports:", imports)
