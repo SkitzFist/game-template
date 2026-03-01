@@ -10,7 +10,6 @@ web_init :: proc "c" () {
 	web_context = context
 
 	init_window()
-	test()
 }
 
 @(export)

@@ -47,16 +47,18 @@ init_window :: proc() {
 
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
+	// log.info("fps:", fps)
 
-	log.info("fps:", fps)
 	// TODO should let
 	// run input systems
 	// run update systems
 
 	be.begin_drawing()
-	be.clear_background(245, 245, 245, 245)
+	be.clear_background(be.RAYWHITE)
 	// run render systems
 	// run render_ui systems
+	be.draw_rectangle(0, 0, 100, 100, be.GOLD)
+	be.draw_circle(600, 600, 400, be.YELLOW)
 	be.end_drawing()
 }
 
