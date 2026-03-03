@@ -123,4 +123,3 @@ draw_line :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Col
 	push_data_f32(thickness)
 	push_data_u32(packed_rgba)
 }
-

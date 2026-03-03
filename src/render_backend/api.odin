@@ -40,4 +40,3 @@ Vector2I :: [2]i32
 Rectangle :: struct {
 	x, y, width, height: i32,
 }
-
