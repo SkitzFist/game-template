@@ -1,6 +1,9 @@
 let canvas = null
 let ctx = null
 let shouldClose = 0
+let targetWidth = 1
+let targetHeight = 1
+let resizeHookInstalled = false
 
 const CMD_CLEAR_BACKGROUND = 1
 const CMD_DRAW_RECTANGLE = 2
@@ -40,13 +43,36 @@ function ensureCanvas() {
   return true
 }
 
+function updateCanvasLayout() {
+  if (!canvas) return
+
+  const viewportWidth = Math.max(1, window.innerWidth | 0)
+  const viewportHeight = Math.max(1, window.innerHeight | 0)
+  const scale = Math.min(viewportWidth / targetWidth, viewportHeight / targetHeight)
+
+  const displayWidth = Math.max(1, Math.floor(targetWidth * scale))
+  const displayHeight = Math.max(1, Math.floor(targetHeight * scale))
+
+  canvas.style.width = `${displayWidth}px`
+  canvas.style.height = `${displayHeight}px`
+}
+
 export function create_game_env(getMemory) {
   return {
     init_window_js(width, height, windowTitle) {
       if (!ensureCanvas()) return
 
-      canvas.width = Math.max(1, width | 0)
-      canvas.height = Math.max(1, height | 0)
+      targetWidth = Math.max(1, width | 0)
+      targetHeight = Math.max(1, height | 0)
+
+      canvas.width = targetWidth
+      canvas.height = targetHeight
+      updateCanvasLayout()
+
+      if (!resizeHookInstalled) {
+        window.addEventListener("resize", updateCanvasLayout)
+        resizeHookInstalled = true
+      }
 
       if (typeof windowTitle === "string" && windowTitle.length > 0) {
         document.title = windowTitle
@@ -56,7 +82,6 @@ export function create_game_env(getMemory) {
       window.addEventListener("beforeunload", () => {
         shouldClose = 1
       }, { once: true })
-
     },
 
     should_close_js() {
