@@ -32,3 +32,13 @@ BLANK :: Color{0, 0, 0, 0}
 MAGENTA :: Color{255, 0, 255, 255}
 RAYWHITE :: Color{245, 245, 245, 255}
 
+
+//-----STRUCTS-----//
+Vector2 :: struct {
+	x, y: f32,
+}
+
+Vector2I :: struct {
+	x, y: i32,
+}
+
