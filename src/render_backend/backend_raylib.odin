@@ -45,8 +45,8 @@ clear_background :: #force_inline proc(color: Color) {
 	rl.ClearBackground(convert_color(color))
 }
 
-draw_rectangle :: #force_inline proc(rec: Rectangle, color: Color) {
-	rl.DrawRectangle(rec.x, rec.y, rec.width, rec.height, convert_color(color))
+draw_rectangle :: #force_inline proc(rect: Rectangle, color: Color) {
+	rl.DrawRectangle(rect.x, rect.y, rect.width, rect.height, convert_color(color))
 }
 
 draw_circle :: #force_inline proc(center: Vector2I, radius: f32, color: Color) {
@@ -54,11 +54,5 @@ draw_circle :: #force_inline proc(center: Vector2I, radius: f32, color: Color) {
 }
 
 draw_line :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Color) {
-	rl.DrawLineEx(
-		convert_vector2i_f(start),
-		convert_vector2i_f(end),
-		thickness,
-		convert_color(color),
-	)
+	rl.DrawLineEx(convert_vector2i_f(start), convert_vector2i_f(end), thickness, convert_color(color))
 }
-

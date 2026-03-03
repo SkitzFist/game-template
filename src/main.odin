@@ -42,9 +42,10 @@ init :: proc() -> runtime.Context {
 }
 
 init_window :: proc() {
-	be.init_window(1920, 1280, PROJECT_NAME)
+	be.init_window(2560, 1440, PROJECT_NAME)
 }
 
+pos: be.Vector2I = {0, 0}
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
 	// log.info("fps:", fps)
@@ -52,6 +53,8 @@ tick :: proc(dt: f32) {
 	// TODO should let
 	// run input systems
 	// run update systems
+	// pos.x += (200 * dt)
+	// pos.y += (50 * dt)
 
 	be.begin_drawing()
 	be.clear_background(be.RAYWHITE)
@@ -59,7 +62,7 @@ tick :: proc(dt: f32) {
 	// run render_ui systems
 
 	//debug tests
-	be.draw_rectangle({0, 0, 100, 100}, be.GOLD)
+	be.draw_rectangle({pos.x, pos.y, 100, 100}, be.GOLD)
 	be.draw_circle({600, 600}, 400, be.YELLOW)
 	be.draw_line({0, 0}, {600, 0}, 10, be.DARKPURPLE)
 	be.draw_line({0, 0}, {be.get_window_width() / 2, be.get_window_height() / 2}, 10, be.DARKGREEN)
@@ -87,4 +90,3 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	return err
 
 }
-
