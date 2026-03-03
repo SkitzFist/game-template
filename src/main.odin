@@ -57,8 +57,13 @@ tick :: proc(dt: f32) {
 	be.clear_background(be.RAYWHITE)
 	// run render systems
 	// run render_ui systems
-	be.draw_rectangle(0, 0, 100, 100, be.GOLD)
-	be.draw_circle(600, 600, 400, be.YELLOW)
+
+	//debug tests
+	be.draw_rectangle({0, 0, 100, 100}, be.GOLD)
+	be.draw_circle({600, 600}, 400, be.YELLOW)
+	be.draw_line({0, 0}, {600, 0}, 10, be.DARKPURPLE)
+	be.draw_line({0, 0}, {be.get_window_width() / 2, be.get_window_height() / 2}, 10, be.DARKGREEN)
+
 	be.end_drawing()
 }
 

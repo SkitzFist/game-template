@@ -3,11 +3,13 @@ let ctx = null
 let shouldClose = 0
 let targetWidth = 1
 let targetHeight = 1
+let canvasDisplayScale = 1
 let resizeHookInstalled = false
 
 const CMD_CLEAR_BACKGROUND = 1
 const CMD_DRAW_RECTANGLE = 2
 const CMD_DRAW_CIRCLE = 3
+const CMD_DRAW_LINE = 4
 
 const floatViewU32 = new Uint32Array(1)
 const floatViewF32 = new Float32Array(floatViewU32.buffer)
@@ -49,6 +51,7 @@ function updateCanvasLayout() {
   const viewportWidth = Math.max(1, window.innerWidth | 0)
   const viewportHeight = Math.max(1, window.innerHeight | 0)
   const scale = Math.min(viewportWidth / targetWidth, viewportHeight / targetHeight)
+  canvasDisplayScale = scale > 0 ? scale : 1
 
   const displayWidth = Math.max(1, Math.floor(targetWidth * scale))
   const displayHeight = Math.max(1, Math.floor(targetHeight * scale))
@@ -84,6 +87,14 @@ export function create_game_env(getMemory) {
       }, { once: true })
     },
 
+    get_render_width() {
+      return canvas.width
+    },
+    
+    get_render_height() {
+      return canvas.height
+    },
+  
     should_close_js() {
       return shouldClose !== 0
     },
@@ -141,6 +152,24 @@ export function create_game_env(getMemory) {
           ctx.beginPath()
           ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
           ctx.fill()
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_LINE && size >= 6) {
+          const startX = cmdData[dataCursor + 0] | 0
+          const startY = cmdData[dataCursor + 1] | 0
+          const endX = cmdData[dataCursor + 2] | 0
+          const endY = cmdData[dataCursor + 3] | 0
+          const thickness = u32BitsToF32(cmdData[dataCursor + 4])
+          const packed = cmdData[dataCursor + 5]
+
+          ctx.strokeStyle = packedToCssColor(packed)
+          ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
+          ctx.beginPath()
+          ctx.moveTo(startX, startY)
+          ctx.lineTo(endX, endY)
+          ctx.stroke()
           dataCursor += size
           continue
         }
