@@ -16,10 +16,11 @@ COMMAND_CAPACITY :: 1024
 COMMAND_DATA_CAPACITY :: 4096
 
 Command_Type :: enum u32 {
-	CLEAR_BACKGROUND = 1,
-	DRAW_RECTANGLE   = 2,
-	DRAW_CIRCLE      = 3,
-	DRAW_LINE        = 4,
+	CLEAR_BACKGROUND       = 1,
+	DRAW_RECTANGLE         = 2,
+	DRAW_RECTANGLE_ROUNDED = 3,
+	DRAW_CIRCLE            = 4,
+	DRAW_LINE              = 5,
 }
 
 command_type: [COMMAND_CAPACITY]u32
@@ -104,6 +105,17 @@ draw_rectangle :: #force_inline proc(rect: Rectangle, color: Color) {
 	push_data_u32(packed_rgba)
 }
 
+draw_rectangle_rounded :: #force_inline proc(rect: Rectangle, corner_radius: f32, color: Color) {
+	packed_rgba := pack_rgba(color)
+	push_command_header(.DRAW_RECTANGLE_ROUNDED, 6)
+	push_data_i32(rect.x)
+	push_data_i32(rect.y)
+	push_data_i32(rect.width)
+	push_data_i32(rect.height)
+	push_data_f32(corner_radius)
+	push_data_u32(packed_rgba)
+}
+
 draw_circle :: #force_inline proc(center: Vector2I, radius: f32, color: Color) {
 	packed_rgba := pack_rgba(color)
 	push_command_header(.DRAW_CIRCLE, 4)
@@ -123,3 +135,4 @@ draw_line :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Col
 	push_data_f32(thickness)
 	push_data_u32(packed_rgba)
 }
+

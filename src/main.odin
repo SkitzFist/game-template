@@ -45,7 +45,8 @@ init_window :: proc() {
 	be.init_window(2560, 1440, PROJECT_NAME)
 }
 
-pos: be.Vector2I = {0, 0}
+pos: [5]be.Vector2I = {{0, 0}, {600, 600}, {0, 1}, {0, 0}, {2560 - 400, 1440 - 400}}
+
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
 	// log.info("fps:", fps)
@@ -53,8 +54,15 @@ tick :: proc(dt: f32) {
 	// TODO should let
 	// run input systems
 	// run update systems
-	// pos.x += (200 * dt)
-	// pos.y += (50 * dt)
+
+	for &vec in pos {
+		vec.y += max(i32(50 * dt), 1)
+
+
+		if vec.y > be.get_window_height() {
+			vec.y = 0
+		}
+	}
 
 	be.begin_drawing()
 	be.clear_background(be.RAYWHITE)
@@ -62,10 +70,12 @@ tick :: proc(dt: f32) {
 	// run render_ui systems
 
 	//debug tests
-	be.draw_rectangle({pos.x, pos.y, 100, 100}, be.GOLD)
-	be.draw_circle({600, 600}, 400, be.YELLOW)
-	be.draw_line({0, 0}, {600, 0}, 10, be.DARKPURPLE)
-	be.draw_line({0, 0}, {be.get_window_width() / 2, be.get_window_height() / 2}, 10, be.DARKGREEN)
+	be.draw_rectangle({pos[0].x, pos[0].y, 100, 100}, be.GOLD)
+	be.draw_circle(pos[1], 400, be.YELLOW)
+	be.draw_line(pos[2], pos[1], 1, be.DARKPURPLE)
+	be.draw_line(pos[3], pos[4], 1, be.DARKGREEN)
+
+	be.draw_rectangle_rounded({pos[4].x, pos[4].y, 200, 200}, 20, be.BLUE)
 
 	be.end_drawing()
 }
@@ -90,3 +100,4 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	return err
 
 }
+
