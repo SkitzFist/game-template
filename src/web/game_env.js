@@ -8,8 +8,9 @@ let resizeHookInstalled = false
 
 const CMD_CLEAR_BACKGROUND = 1
 const CMD_DRAW_RECTANGLE = 2
-const CMD_DRAW_CIRCLE = 3
-const CMD_DRAW_LINE = 4
+const CMD_DRAW_RECTANGLE_ROUNDED = 3
+const CMD_DRAW_CIRCLE = 4
+const CMD_DRAW_LINE = 5
 
 const floatViewU32 = new Uint32Array(1)
 const floatViewF32 = new Float32Array(floatViewU32.buffer)
@@ -138,6 +139,36 @@ export function create_game_env(getMemory) {
 
           ctx.fillStyle = packedToCssColor(packed)
           ctx.fillRect(x, y, width, height)
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_RECTANGLE_ROUNDED && size >= 6) {
+          const x = cmdData[dataCursor + 0] | 0
+          const y = cmdData[dataCursor + 1] | 0
+          const width = cmdData[dataCursor + 2] | 0
+          const height = cmdData[dataCursor + 3] | 0
+          const radius = u32BitsToF32(cmdData[dataCursor + 4])
+          const packed = cmdData[dataCursor + 5]
+
+          const w = Math.max(0, width)
+          const h = Math.max(0, height)
+          const rr = Math.max(0, Math.min(radius, Math.min(w, h) * 0.5))
+
+          ctx.fillStyle = packedToCssColor(packed)
+          ctx.beginPath()
+          ctx.moveTo(x + rr, y)
+          ctx.lineTo(x + w - rr, y)
+          ctx.arcTo(x + w, y, x + w, y + rr, rr)
+          ctx.lineTo(x + w, y + h - rr)
+          ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr)
+          ctx.lineTo(x + rr, y + h)
+          ctx.arcTo(x, y + h, x, y + h - rr, rr)
+          ctx.lineTo(x, y + rr)
+          ctx.arcTo(x, y, x + rr, y, rr)
+          ctx.closePath()
+          ctx.fill()
+
           dataCursor += size
           continue
         }
