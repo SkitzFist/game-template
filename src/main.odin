@@ -42,21 +42,41 @@ init :: proc() -> runtime.Context {
 }
 
 init_window :: proc() {
-	be.init_window(1920, 1280, PROJECT_NAME)
+	be.init_window(2560, 1440, PROJECT_NAME)
 }
+
+pos: [5]be.Vector2I = {{0, 0}, {600, 600}, {0, 1}, {0, 0}, {2560 - 400, 1440 - 400}}
 
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
+	// log.info("fps:", fps)
 
-	log.info("fps:", fps)
 	// TODO should let
 	// run input systems
 	// run update systems
 
+	for &vec in pos {
+		vec.y += max(i32(50 * dt), 1)
+
+
+		if vec.y > be.get_window_height() {
+			vec.y = 0
+		}
+	}
+
 	be.begin_drawing()
-	be.clear_background(245, 245, 245, 245)
+	be.clear_background(be.RAYWHITE)
 	// run render systems
 	// run render_ui systems
+
+	//debug tests
+	be.draw_rectangle({pos[0].x, pos[0].y, 100, 100}, be.GOLD)
+	be.draw_circle(pos[1], 400, be.YELLOW)
+	be.draw_line(pos[2], pos[1], 1, be.DARKPURPLE)
+	be.draw_line(pos[3], pos[4], 1, be.DARKGREEN)
+
+	be.draw_rectangle_rounded({pos[4].x, pos[4].y, 200, 200}, 20, be.BLUE)
+
 	be.end_drawing()
 }
 

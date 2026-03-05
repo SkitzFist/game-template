@@ -12,19 +12,18 @@ if [ $PLATFORM == "WEB" ]; then
 
     odin build src/ \
         -target:js_wasm32 \
-        -define:PLATFORM=WEB \
         -out:$OUT_DIR/game \
         -o:speed
 
     cp src/web/game.html $OUT_DIR/game.html
     cp src/web/game.js $OUT_DIR/game.js
+    cp src/web/game_env.js $OUT_DIR/game_env.js
     echo "Build created in ${OUT_DIR}"
 elif [ $PLATFORM == "DESKTOP" ]; then
     OUT_DIR="build/desktop"
     mkdir -p $OUT_DIR
 
     odin build src/ \
-        -define:PLATFORM=DESKTOP \
         -out:$OUT_DIR/game \
         -o:speed
 
