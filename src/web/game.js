@@ -1,31 +1,9 @@
 import { create_game_env } from "./game_env.js"
+import { create_odin_env } from "./odin_env.js"
 
 const wasmUrl = "./game.wasm"
 
 let wasmMemory = null
-
-function get_odin_env() {
-  return {
-      write(fd, ptr, len) {
-        const bytes = new Uint8Array(wasmMemory.buffer, ptr, len);
-        const text = new TextDecoder("utf-8").decode(bytes)
-
-        if ( fd == 2 ) console.error(text)
-        else console.log( text )
-
-        return len
-      },
-      rand_bytes(ptr, len) {
-        const bytes = new Uint8Array(wasmMemory.buffer, ptr, len)
-
-        crypto.getRandomValues(bytes)
-        return 1;
-      },
-      time_now() {
-        return BigInt(Date.now()) * 1_000_000n
-      },
-  }
-}
 
 
 function startGame(wasm) {
@@ -61,7 +39,7 @@ async function loadWasm() {
   console.log("bytes:", bytes)
 
   const imports = {
-    odin_env: get_odin_env(),
+    odin_env: create_odin_env(() => wasmMemory),
     env: {},
     game_env: create_game_env(() => wasmMemory),
   };
