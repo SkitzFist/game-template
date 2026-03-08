@@ -2,6 +2,7 @@ package game
 
 import "base:runtime"
 import "core:log"
+import "core:math"
 import "core:mem"
 
 import be "render_backend"
@@ -46,8 +47,10 @@ init_window :: proc() {
 }
 
 pos: [5]be.Vector2I = {{0, 0}, {600, 600}, {0, 1}, {0, 0}, {2560 - 400, 1440 - 400}}
-
+rect_line: be.RectangleI = {400, 400, 200, 200}
+acc: f32
 tick :: proc(dt: f32) {
+	acc += dt
 	fps := int(1.0 / dt)
 	// log.info("fps:", fps)
 
@@ -64,18 +67,38 @@ tick :: proc(dt: f32) {
 		}
 	}
 
+	rect_line.x += max(i32(50 * dt), 1)
+
+	if rect_line.x >= be.get_window_width() {
+		rect_line.x = 0 - rect_line.width - 1
+	}
+
+	circle_radius: f32 = f32(rect_line.width / 2)
+	center_y: f32 = f32(rect_line.y + rect_line.width / 2)
+	circle_speed: f32 = 2.0
+	circle_y: f32 = center_y + math.sin(acc * circle_speed) * f32(rect_line.height)
+	circle_center: be.Vector2F = {f32(rect_line.x + rect_line.width / 2), circle_y}
+
 	be.begin_drawing()
 	be.clear_background(be.RAYWHITE)
 	// run render systems
 	// run render_ui systems
 
 	//debug tests
-	be.draw_rectangle({pos[0].x, pos[0].y, 100, 100}, be.GOLD)
+	be.draw_rectangle(be.RectangleI{pos[0].x, pos[0].y, 100, 100}, be.GOLD)
 	be.draw_circle(pos[1], 400, be.YELLOW)
 	be.draw_line(pos[2], pos[1], 1, be.DARKPURPLE)
-	be.draw_line(pos[3], pos[4], 1, be.DARKGREEN)
+	be.draw_line(pos[3], be.convert_vector(circle_center), 1, be.DARKGREEN)
 
-	be.draw_rectangle_rounded({pos[4].x, pos[4].y, 200, 200}, 20, be.BLUE)
+	be.draw_rectangle_rounded(be.RectangleI{pos[4].x, pos[4].y, 200, 200}, 20, be.BLUE)
+
+	thickness :: 5.0
+
+	be.draw_rectangle_line(rect_line, thickness, be.SKYBLUE)
+	be.draw_circle_line(circle_center, circle_radius, thickness, be.RED)
+	rect_2 := rect_line
+	rect_2.y += rect_2.height
+	be.draw_rectangle_rounded_line(rect_2, 20, thickness, be.BROWN)
 
 	be.end_drawing()
 }

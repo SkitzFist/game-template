@@ -21,6 +21,9 @@ Command_Type :: enum u32 {
 	DRAW_RECTANGLE_ROUNDED = 3,
 	DRAW_CIRCLE            = 4,
 	DRAW_LINE              = 5,
+	DRAW_RECTANGLE_LINE    = 6,
+	DRAW_RECT_ROUNDED_LINE = 7,
+	DRAW_CIRCLE_LINE       = 8,
 }
 
 command_type: [COMMAND_CAPACITY]u32
@@ -95,44 +98,203 @@ clear_background :: #force_inline proc(color: Color) {
 	push_data_u32(packed_rgba)
 }
 
-draw_rectangle :: #force_inline proc(rect: Rectangle, color: Color) {
+@(private = "file")
+draw_rectangle_i32 :: #force_inline proc(rect: RectangleI, color: Color) {
+	draw_rectangle_f32(
+		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
+		color,
+	)
+}
+
+@(private = "file")
+draw_rectangle_f32 :: #force_inline proc(rect: RectangleF, color: Color) {
 	packed_rgba := pack_rgba(color)
 	push_command_header(.DRAW_RECTANGLE, 5)
-	push_data_i32(rect.x)
-	push_data_i32(rect.y)
-	push_data_i32(rect.width)
-	push_data_i32(rect.height)
+	push_data_f32(rect.x)
+	push_data_f32(rect.y)
+	push_data_f32(rect.width)
+	push_data_f32(rect.height)
 	push_data_u32(packed_rgba)
 }
 
-draw_rectangle_rounded :: #force_inline proc(rect: Rectangle, corner_radius: f32, color: Color) {
+draw_rectangle :: proc {
+	draw_rectangle_f32,
+	draw_rectangle_i32,
+}
+
+@(private = "file")
+draw_rectangle_rounded_i32 :: #force_inline proc(
+	rect: RectangleI,
+	corner_radius: f32,
+	color: Color,
+) {
+	draw_rectangle_rounded_f32(
+		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
+		corner_radius,
+		color,
+	)
+}
+
+@(private = "file")
+draw_rectangle_rounded_f32 :: #force_inline proc(
+	rect: RectangleF,
+	corner_radius: f32,
+	color: Color,
+) {
 	packed_rgba := pack_rgba(color)
 	push_command_header(.DRAW_RECTANGLE_ROUNDED, 6)
-	push_data_i32(rect.x)
-	push_data_i32(rect.y)
-	push_data_i32(rect.width)
-	push_data_i32(rect.height)
+	push_data_f32(rect.x)
+	push_data_f32(rect.y)
+	push_data_f32(rect.width)
+	push_data_f32(rect.height)
 	push_data_f32(corner_radius)
 	push_data_u32(packed_rgba)
 }
 
-draw_circle :: #force_inline proc(center: Vector2I, radius: f32, color: Color) {
+draw_rectangle_rounded :: proc {
+	draw_rectangle_rounded_f32,
+	draw_rectangle_rounded_i32,
+}
+
+@(private = "file")
+draw_circle_i32 :: #force_inline proc(center: Vector2I, radius: f32, color: Color) {
+	draw_circle_f32(Vector2F{f32(center.x), f32(center.y)}, radius, color)
+}
+
+@(private = "file")
+draw_circle_f32 :: #force_inline proc(center: Vector2F, radius: f32, color: Color) {
 	packed_rgba := pack_rgba(color)
 	push_command_header(.DRAW_CIRCLE, 4)
-	push_data_i32(center.x)
-	push_data_i32(center.y)
+	push_data_f32(center.x)
+	push_data_f32(center.y)
 	push_data_f32(radius)
 	push_data_u32(packed_rgba)
 }
 
-draw_line :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Color) {
+draw_circle :: proc {
+	draw_circle_f32,
+	draw_circle_i32,
+}
+
+@(private = "file")
+draw_line_i32 :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Color) {
+	draw_line_f32(
+		Vector2F{f32(start.x), f32(start.y)},
+		Vector2F{f32(end.x), f32(end.y)},
+		thickness,
+		color,
+	)
+}
+
+@(private = "file")
+draw_line_f32 :: #force_inline proc(start, end: Vector2F, thickness: f32, color: Color) {
 	packed_rgba := pack_rgba(color)
 	push_command_header(.DRAW_LINE, 6)
-	push_data_i32(start.x)
-	push_data_i32(start.y)
-	push_data_i32(end.x)
-	push_data_i32(end.y)
+	push_data_f32(start.x)
+	push_data_f32(start.y)
+	push_data_f32(end.x)
+	push_data_f32(end.y)
 	push_data_f32(thickness)
 	push_data_u32(packed_rgba)
+}
+
+draw_line :: proc {
+	draw_line_f32,
+	draw_line_i32,
+}
+
+@(private = "file")
+draw_rectangle_line_i32 :: #force_inline proc(rect: RectangleI, thickness: f32, color: Color) {
+	draw_rectangle_line_f32(
+		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
+		thickness,
+		color,
+	)
+}
+
+@(private = "file")
+draw_rectangle_line_f32 :: #force_inline proc(rect: RectangleF, thickness: f32, color: Color) {
+	packed_rgba := pack_rgba(color)
+	push_command_header(.DRAW_RECTANGLE_LINE, 6)
+	push_data_f32(rect.x)
+	push_data_f32(rect.y)
+	push_data_f32(rect.width)
+	push_data_f32(rect.height)
+	push_data_f32(thickness)
+	push_data_u32(packed_rgba)
+}
+
+draw_rectangle_line :: proc {
+	draw_rectangle_line_f32,
+	draw_rectangle_line_i32,
+}
+
+@(private = "file")
+draw_rectangle_rounded_line_i32 :: #force_inline proc(
+	rect: RectangleI,
+	corner_radius: f32,
+	thickness: f32,
+	color: Color,
+) {
+	draw_rectangle_rounded_line_f32(
+		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
+		corner_radius,
+		thickness,
+		color,
+	)
+}
+
+@(private = "file")
+draw_rectangle_rounded_line_f32 :: #force_inline proc(
+	rect: RectangleF,
+	corner_radius: f32,
+	thickness: f32,
+	color: Color,
+) {
+	packed_rgba := pack_rgba(color)
+	push_command_header(.DRAW_RECT_ROUNDED_LINE, 7)
+	push_data_f32(rect.x)
+	push_data_f32(rect.y)
+	push_data_f32(rect.width)
+	push_data_f32(rect.height)
+	push_data_f32(corner_radius)
+	push_data_f32(thickness)
+	push_data_u32(packed_rgba)
+}
+
+draw_rectangle_rounded_line :: proc {
+	draw_rectangle_rounded_line_f32,
+	draw_rectangle_rounded_line_i32,
+}
+
+@(private = "file")
+draw_circle_line_i32 :: #force_inline proc(
+	center: Vector2I,
+	radius: f32,
+	thickness: f32,
+	color: Color,
+) {
+	draw_circle_line_f32(Vector2F{f32(center.x), f32(center.y)}, radius, thickness, color)
+}
+
+@(private = "file")
+draw_circle_line_f32 :: #force_inline proc(
+	center: Vector2F,
+	radius: f32,
+	thickness: f32,
+	color: Color,
+) {
+	packed_rgba := pack_rgba(color)
+	push_command_header(.DRAW_CIRCLE_LINE, 5)
+	push_data_f32(center.x)
+	push_data_f32(center.y)
+	push_data_f32(radius)
+	push_data_f32(thickness)
+	push_data_u32(packed_rgba)
+}
+
+draw_circle_line :: proc {
+	draw_circle_line_f32,
+	draw_circle_line_i32,
 }
 

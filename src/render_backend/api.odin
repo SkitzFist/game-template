@@ -37,6 +37,57 @@ RAYWHITE :: Color{245, 245, 245, 255}
 
 Vector2F :: [2]f32
 Vector2I :: [2]i32
-Rectangle :: struct {
+
+@(private = "file")
+convert_vector_i32_f32 :: #force_inline proc(vec: Vector2I) -> Vector2F {
+	return {f32(vec.x), f32(vec.y)}
+}
+
+@(private = "file")
+convert_vector_f32_i32 :: #force_inline proc(vec: Vector2F) -> Vector2I {
+	return {i32(vec.x), i32(vec.y)}
+}
+
+convert_vector :: proc {
+	convert_vector_i32_f32,
+	convert_vector_f32_i32,
+}
+
+RectangleI :: struct {
 	x, y, width, height: i32,
 }
+
+RectangleF :: struct {
+	x, y, width, height: f32,
+}
+
+@(private = "file")
+get_rect_center_i32 :: proc(rect: RectangleI) -> Vector2I {
+	return {rect.x + (rect.width / 2), rect.y + (rect.height / 2)}
+}
+
+@(private = "file")
+get_rect_center_f32 :: proc(rect: RectangleF) -> Vector2F {
+	return {rect.x + (rect.width / 2), rect.y + (rect.height / 2)}
+}
+
+get_rect_center :: proc {
+	get_rect_center_i32,
+	get_rect_center_f32,
+}
+
+@(private = "file")
+convert_rect_i32_f32 :: proc(rect: RectangleI) -> RectangleF {
+	return {f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)}
+}
+
+@(private = "file")
+convert_rect_f32_i32 :: proc(rect: RectangleF) -> RectangleI {
+	return {i32(rect.x), i32(rect.y), i32(rect.width), i32(rect.height)}
+}
+
+convert_rect :: proc {
+	convert_rect_i32_f32,
+	convert_rect_f32_i32,
+}
+
