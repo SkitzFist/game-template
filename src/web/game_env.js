@@ -11,6 +11,9 @@ const CMD_DRAW_RECTANGLE = 2
 const CMD_DRAW_RECTANGLE_ROUNDED = 3
 const CMD_DRAW_CIRCLE = 4
 const CMD_DRAW_LINE = 5
+const CMD_DRAW_RECTANGLE_LINE = 6
+const CMD_DRAW_RECTANGLE_ROUNDED_LINE = 7
+const CMD_DRAW_CIRCLE_LINE = 8
 
 const floatViewU32 = new Uint32Array(1)
 const floatViewF32 = new Float32Array(floatViewU32.buffer)
@@ -131,10 +134,10 @@ export function create_game_env(getMemory) {
         }
 
         if (opcode === CMD_DRAW_RECTANGLE && size >= 5) {
-          const x = cmdData[dataCursor + 0] | 0
-          const y = cmdData[dataCursor + 1] | 0
-          const width = cmdData[dataCursor + 2] | 0
-          const height = cmdData[dataCursor + 3] | 0
+          const x = u32BitsToF32(cmdData[dataCursor + 0])
+          const y = u32BitsToF32(cmdData[dataCursor + 1])
+          const width = u32BitsToF32(cmdData[dataCursor + 2])
+          const height = u32BitsToF32(cmdData[dataCursor + 3])
           const packed = cmdData[dataCursor + 4]
 
           ctx.fillStyle = packedToCssColor(packed)
@@ -144,10 +147,10 @@ export function create_game_env(getMemory) {
         }
 
         if (opcode === CMD_DRAW_RECTANGLE_ROUNDED && size >= 6) {
-          const x = cmdData[dataCursor + 0] | 0
-          const y = cmdData[dataCursor + 1] | 0
-          const width = cmdData[dataCursor + 2] | 0
-          const height = cmdData[dataCursor + 3] | 0
+          const x = u32BitsToF32(cmdData[dataCursor + 0])
+          const y = u32BitsToF32(cmdData[dataCursor + 1])
+          const width = u32BitsToF32(cmdData[dataCursor + 2])
+          const height = u32BitsToF32(cmdData[dataCursor + 3])
           const radius = u32BitsToF32(cmdData[dataCursor + 4])
           const packed = cmdData[dataCursor + 5]
 
@@ -174,8 +177,8 @@ export function create_game_env(getMemory) {
         }
 
         if (opcode === CMD_DRAW_CIRCLE && size >= 4) {
-          const centerX = cmdData[dataCursor + 0] | 0
-          const centerY = cmdData[dataCursor + 1] | 0
+          const centerX = u32BitsToF32(cmdData[dataCursor + 0])
+          const centerY = u32BitsToF32(cmdData[dataCursor + 1])
           const radius = u32BitsToF32(cmdData[dataCursor + 2])
           const packed = cmdData[dataCursor + 3]
 
@@ -188,10 +191,10 @@ export function create_game_env(getMemory) {
         }
 
         if (opcode === CMD_DRAW_LINE && size >= 6) {
-          const startX = cmdData[dataCursor + 0] | 0
-          const startY = cmdData[dataCursor + 1] | 0
-          const endX = cmdData[dataCursor + 2] | 0
-          const endY = cmdData[dataCursor + 3] | 0
+          const startX = u32BitsToF32(cmdData[dataCursor + 0])
+          const startY = u32BitsToF32(cmdData[dataCursor + 1])
+          const endX = u32BitsToF32(cmdData[dataCursor + 2])
+          const endY = u32BitsToF32(cmdData[dataCursor + 3])
           const thickness = u32BitsToF32(cmdData[dataCursor + 4])
           const packed = cmdData[dataCursor + 5]
 
@@ -200,6 +203,69 @@ export function create_game_env(getMemory) {
           ctx.beginPath()
           ctx.moveTo(startX, startY)
           ctx.lineTo(endX, endY)
+          ctx.stroke()
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_RECTANGLE_LINE && size >= 6) {
+          const x = u32BitsToF32(cmdData[dataCursor + 0])
+          const y = u32BitsToF32(cmdData[dataCursor + 1])
+          const width = u32BitsToF32(cmdData[dataCursor + 2])
+          const height = u32BitsToF32(cmdData[dataCursor + 3])
+          const thickness = u32BitsToF32(cmdData[dataCursor + 4])
+          const packed = cmdData[dataCursor + 5]
+
+          ctx.strokeStyle = packedToCssColor(packed)
+          ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
+          ctx.strokeRect(x, y, width, height)
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_RECTANGLE_ROUNDED_LINE && size >= 7) {
+          const x = u32BitsToF32(cmdData[dataCursor + 0])
+          const y = u32BitsToF32(cmdData[dataCursor + 1])
+          const width = u32BitsToF32(cmdData[dataCursor + 2])
+          const height = u32BitsToF32(cmdData[dataCursor + 3])
+          const radius = u32BitsToF32(cmdData[dataCursor + 4])
+          const thickness = u32BitsToF32(cmdData[dataCursor + 5])
+          const packed = cmdData[dataCursor + 6]
+
+          const w = Math.max(0, width)
+          const h = Math.max(0, height)
+          const rr = Math.max(0, Math.min(radius, Math.min(w, h) * 0.5))
+
+          ctx.strokeStyle = packedToCssColor(packed)
+          ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
+          ctx.beginPath()
+          ctx.moveTo(x + rr, y)
+          ctx.lineTo(x + w - rr, y)
+          ctx.arcTo(x + w, y, x + w, y + rr, rr)
+          ctx.lineTo(x + w, y + h - rr)
+          ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr)
+          ctx.lineTo(x + rr, y + h)
+          ctx.arcTo(x, y + h, x, y + h - rr, rr)
+          ctx.lineTo(x, y + rr)
+          ctx.arcTo(x, y, x + rr, y, rr)
+          ctx.closePath()
+          ctx.stroke()
+
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_CIRCLE_LINE && size >= 5) {
+          const centerX = u32BitsToF32(cmdData[dataCursor + 0])
+          const centerY = u32BitsToF32(cmdData[dataCursor + 1])
+          const radius = u32BitsToF32(cmdData[dataCursor + 2])
+          const thickness = u32BitsToF32(cmdData[dataCursor + 3])
+          const packed = cmdData[dataCursor + 4]
+
+          ctx.strokeStyle = packedToCssColor(packed)
+          ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
+          ctx.beginPath()
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
           ctx.stroke()
           dataCursor += size
           continue
