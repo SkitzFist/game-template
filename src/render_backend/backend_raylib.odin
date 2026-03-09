@@ -143,6 +143,27 @@ draw_circle :: proc {
 }
 
 @(private = "file")
+draw_triangle_i32 :: #force_inline proc(v1, v2, v3: Vector2I, color: Color) {
+	draw_triangle_f32(convert_vector(v1), convert_vector(v2), convert_vector(v3), color)
+}
+
+@(private = "file")
+draw_triangle_f32 :: #force_inline proc(v1, v2, v3: Vector2F, color: Color) {
+	area2 := (v2.x-v1.x)*(v3.y-v1.y) - (v2.y-v1.y)*(v3.x-v1.x)
+	if area2 > 0 {
+		rl.DrawTriangle(convert_vector2f(v1), convert_vector2f(v3), convert_vector2f(v2), convert_color(color))
+		return
+	}
+
+	rl.DrawTriangle(convert_vector2f(v1), convert_vector2f(v2), convert_vector2f(v3), convert_color(color))
+}
+
+draw_triangle :: proc {
+	draw_triangle_f32,
+	draw_triangle_i32,
+}
+
+@(private = "file")
 draw_line_i32 :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Color) {
 	rl.DrawLineEx(
 		convert_vector2i_f(start),
@@ -361,3 +382,31 @@ draw_circle_line :: proc {
 	draw_circle_line_i32,
 }
 
+@(private = "file")
+draw_triangle_line_i32 :: #force_inline proc(
+	v1, v2, v3: Vector2I,
+	thickness: f32,
+	color: Color,
+) {
+	draw_triangle_line_f32(convert_vector(v1), convert_vector(v2), convert_vector(v3), thickness, color)
+}
+
+@(private = "file")
+draw_triangle_line_f32 :: #force_inline proc(
+	v1, v2, v3: Vector2F,
+	thickness: f32,
+	color: Color,
+) {
+	if thickness <= 0 {
+		return
+	}
+
+	draw_line(v1, v2, thickness, color)
+	draw_line(v2, v3, thickness, color)
+	draw_line(v3, v1, thickness, color)
+}
+
+draw_triangle_line :: proc {
+	draw_triangle_line_f32,
+	draw_triangle_line_i32,
+}

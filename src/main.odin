@@ -100,6 +100,23 @@ tick :: proc(dt: f32) {
 	rect_2.y += rect_2.height
 	be.draw_rectangle_rounded_line(rect_2, 20, thickness, be.BROWN)
 
+	center: be.Vector2I = {be.get_window_width() / 2, be.get_window_height() / 2}
+	size: i32 : 500
+	be.draw_triangle(
+		center,
+		be.Vector2I{center.x + size, center.y + size},
+		be.Vector2I{center.x, center.y + size},
+		be.RED,
+	)
+
+	be.draw_triangle_line(
+		center,
+		be.Vector2I{center.x + size, center.y},
+		be.Vector2I{center.x + size, center.y + size},
+		5,
+		be.BLUE,
+	)
+
 	be.end_drawing()
 }
 
