@@ -14,6 +14,8 @@ const CMD_DRAW_LINE = 5
 const CMD_DRAW_RECTANGLE_LINE = 6
 const CMD_DRAW_RECTANGLE_ROUNDED_LINE = 7
 const CMD_DRAW_CIRCLE_LINE = 8
+const CMD_DRAW_TRIANGLE = 9
+const CMD_DRAW_TRIANGLE_LINE = 10
 
 const floatViewU32 = new Uint32Array(1)
 const floatViewF32 = new Float32Array(floatViewU32.buffer)
@@ -266,6 +268,48 @@ export function create_game_env(getMemory) {
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
           ctx.beginPath()
           ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+          ctx.stroke()
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_TRIANGLE && size >= 7) {
+          const x1 = u32BitsToF32(cmdData[dataCursor + 0])
+          const y1 = u32BitsToF32(cmdData[dataCursor + 1])
+          const x2 = u32BitsToF32(cmdData[dataCursor + 2])
+          const y2 = u32BitsToF32(cmdData[dataCursor + 3])
+          const x3 = u32BitsToF32(cmdData[dataCursor + 4])
+          const y3 = u32BitsToF32(cmdData[dataCursor + 5])
+          const packed = cmdData[dataCursor + 6]
+
+          ctx.fillStyle = packedToCssColor(packed)
+          ctx.beginPath()
+          ctx.moveTo(x1, y1)
+          ctx.lineTo(x2, y2)
+          ctx.lineTo(x3, y3)
+          ctx.closePath()
+          ctx.fill()
+          dataCursor += size
+          continue
+        }
+
+        if (opcode === CMD_DRAW_TRIANGLE_LINE && size >= 8) {
+          const x1 = u32BitsToF32(cmdData[dataCursor + 0])
+          const y1 = u32BitsToF32(cmdData[dataCursor + 1])
+          const x2 = u32BitsToF32(cmdData[dataCursor + 2])
+          const y2 = u32BitsToF32(cmdData[dataCursor + 3])
+          const x3 = u32BitsToF32(cmdData[dataCursor + 4])
+          const y3 = u32BitsToF32(cmdData[dataCursor + 5])
+          const thickness = u32BitsToF32(cmdData[dataCursor + 6])
+          const packed = cmdData[dataCursor + 7]
+
+          ctx.strokeStyle = packedToCssColor(packed)
+          ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
+          ctx.beginPath()
+          ctx.moveTo(x1, y1)
+          ctx.lineTo(x2, y2)
+          ctx.lineTo(x3, y3)
+          ctx.closePath()
           ctx.stroke()
           dataCursor += size
           continue

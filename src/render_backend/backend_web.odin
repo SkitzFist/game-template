@@ -24,6 +24,8 @@ Command_Type :: enum u32 {
 	DRAW_RECTANGLE_LINE    = 6,
 	DRAW_RECT_ROUNDED_LINE = 7,
 	DRAW_CIRCLE_LINE       = 8,
+	DRAW_TRIANGLE          = 9,
+	DRAW_TRIANGLE_LINE     = 10,
 }
 
 command_type: [COMMAND_CAPACITY]u32
@@ -177,6 +179,29 @@ draw_circle :: proc {
 }
 
 @(private = "file")
+draw_triangle_i32 :: #force_inline proc(v1, v2, v3: Vector2I, color: Color) {
+	draw_triangle_f32(convert_vector(v1), convert_vector(v2), convert_vector(v3), color)
+}
+
+@(private = "file")
+draw_triangle_f32 :: #force_inline proc(v1, v2, v3: Vector2F, color: Color) {
+	packed_rgba := pack_rgba(color)
+	push_command_header(.DRAW_TRIANGLE, 7)
+	push_data_f32(v1.x)
+	push_data_f32(v1.y)
+	push_data_f32(v2.x)
+	push_data_f32(v2.y)
+	push_data_f32(v3.x)
+	push_data_f32(v3.y)
+	push_data_u32(packed_rgba)
+}
+
+draw_triangle :: proc {
+	draw_triangle_f32,
+	draw_triangle_i32,
+}
+
+@(private = "file")
 draw_line_i32 :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Color) {
 	draw_line_f32(
 		Vector2F{f32(start.x), f32(start.y)},
@@ -298,3 +323,34 @@ draw_circle_line :: proc {
 	draw_circle_line_i32,
 }
 
+@(private = "file")
+draw_triangle_line_i32 :: #force_inline proc(
+	v1, v2, v3: Vector2I,
+	thickness: f32,
+	color: Color,
+) {
+	draw_triangle_line_f32(convert_vector(v1), convert_vector(v2), convert_vector(v3), thickness, color)
+}
+
+@(private = "file")
+draw_triangle_line_f32 :: #force_inline proc(
+	v1, v2, v3: Vector2F,
+	thickness: f32,
+	color: Color,
+) {
+	packed_rgba := pack_rgba(color)
+	push_command_header(.DRAW_TRIANGLE_LINE, 8)
+	push_data_f32(v1.x)
+	push_data_f32(v1.y)
+	push_data_f32(v2.x)
+	push_data_f32(v2.y)
+	push_data_f32(v3.x)
+	push_data_f32(v3.y)
+	push_data_f32(thickness)
+	push_data_u32(packed_rgba)
+}
+
+draw_triangle_line :: proc {
+	draw_triangle_line_f32,
+	draw_triangle_line_i32,
+}
