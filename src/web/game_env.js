@@ -33,6 +33,16 @@ function packedToCssColor(packed) {
   return `rgba(${r}, ${g}, ${b}, ${a})`
 }
 
+function rotatePoint(x, y, pivotX, pivotY, rotation) {
+  if (rotation === 0) return [x, y]
+
+  const s = Math.sin(rotation)
+  const c = Math.cos(rotation)
+  const dx = x - pivotX
+  const dy = y - pivotY
+  return [pivotX + dx * c - dy * s, pivotY + dx * s + dy * c]
+}
+
 function ensureCanvas() {
   if (canvas && ctx) return true
 
@@ -135,54 +145,68 @@ export function create_game_env(getMemory) {
           continue
         }
 
-        if (opcode === CMD_DRAW_RECTANGLE && size >= 5) {
+        if (opcode === CMD_DRAW_RECTANGLE && size >= 6) {
           const x = u32BitsToF32(cmdData[dataCursor + 0])
           const y = u32BitsToF32(cmdData[dataCursor + 1])
           const width = u32BitsToF32(cmdData[dataCursor + 2])
           const height = u32BitsToF32(cmdData[dataCursor + 3])
-          const packed = cmdData[dataCursor + 4]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 4])
+          const packed = cmdData[dataCursor + 5]
 
           ctx.fillStyle = packedToCssColor(packed)
-          ctx.fillRect(x, y, width, height)
+          const cx = x + width * 0.5
+          const cy = y + height * 0.5
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(rotation)
+          ctx.fillRect(-width * 0.5, -height * 0.5, width, height)
+          ctx.restore()
           dataCursor += size
           continue
         }
 
-        if (opcode === CMD_DRAW_RECTANGLE_ROUNDED && size >= 6) {
+        if (opcode === CMD_DRAW_RECTANGLE_ROUNDED && size >= 7) {
           const x = u32BitsToF32(cmdData[dataCursor + 0])
           const y = u32BitsToF32(cmdData[dataCursor + 1])
           const width = u32BitsToF32(cmdData[dataCursor + 2])
           const height = u32BitsToF32(cmdData[dataCursor + 3])
           const radius = u32BitsToF32(cmdData[dataCursor + 4])
-          const packed = cmdData[dataCursor + 5]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 5])
+          const packed = cmdData[dataCursor + 6]
 
           const w = Math.max(0, width)
           const h = Math.max(0, height)
           const rr = Math.max(0, Math.min(radius, Math.min(w, h) * 0.5))
 
+          const cx = x + w * 0.5
+          const cy = y + h * 0.5
           ctx.fillStyle = packedToCssColor(packed)
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(rotation)
           ctx.beginPath()
-          ctx.moveTo(x + rr, y)
-          ctx.lineTo(x + w - rr, y)
-          ctx.arcTo(x + w, y, x + w, y + rr, rr)
-          ctx.lineTo(x + w, y + h - rr)
-          ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr)
-          ctx.lineTo(x + rr, y + h)
-          ctx.arcTo(x, y + h, x, y + h - rr, rr)
-          ctx.lineTo(x, y + rr)
-          ctx.arcTo(x, y, x + rr, y, rr)
+          ctx.moveTo(-w * 0.5 + rr, -h * 0.5)
+          ctx.lineTo(w * 0.5 - rr, -h * 0.5)
+          ctx.arcTo(w * 0.5, -h * 0.5, w * 0.5, -h * 0.5 + rr, rr)
+          ctx.lineTo(w * 0.5, h * 0.5 - rr)
+          ctx.arcTo(w * 0.5, h * 0.5, w * 0.5 - rr, h * 0.5, rr)
+          ctx.lineTo(-w * 0.5 + rr, h * 0.5)
+          ctx.arcTo(-w * 0.5, h * 0.5, -w * 0.5, h * 0.5 - rr, rr)
+          ctx.lineTo(-w * 0.5, -h * 0.5 + rr)
+          ctx.arcTo(-w * 0.5, -h * 0.5, -w * 0.5 + rr, -h * 0.5, rr)
           ctx.closePath()
           ctx.fill()
+          ctx.restore()
 
           dataCursor += size
           continue
         }
 
-        if (opcode === CMD_DRAW_CIRCLE && size >= 4) {
+        if (opcode === CMD_DRAW_CIRCLE && size >= 5) {
           const centerX = u32BitsToF32(cmdData[dataCursor + 0])
           const centerY = u32BitsToF32(cmdData[dataCursor + 1])
           const radius = u32BitsToF32(cmdData[dataCursor + 2])
-          const packed = cmdData[dataCursor + 3]
+          const packed = cmdData[dataCursor + 4]
 
           ctx.fillStyle = packedToCssColor(packed)
           ctx.beginPath()
@@ -192,47 +216,61 @@ export function create_game_env(getMemory) {
           continue
         }
 
-        if (opcode === CMD_DRAW_LINE && size >= 6) {
+        if (opcode === CMD_DRAW_LINE && size >= 7) {
           const startX = u32BitsToF32(cmdData[dataCursor + 0])
           const startY = u32BitsToF32(cmdData[dataCursor + 1])
           const endX = u32BitsToF32(cmdData[dataCursor + 2])
           const endY = u32BitsToF32(cmdData[dataCursor + 3])
           const thickness = u32BitsToF32(cmdData[dataCursor + 4])
-          const packed = cmdData[dataCursor + 5]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 5])
+          const packed = cmdData[dataCursor + 6]
+
+          const pivotX = (startX + endX) * 0.5
+          const pivotY = (startY + endY) * 0.5
+          const [sx, sy] = rotatePoint(startX, startY, pivotX, pivotY, rotation)
+          const [ex, ey] = rotatePoint(endX, endY, pivotX, pivotY, rotation)
 
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
           ctx.beginPath()
-          ctx.moveTo(startX, startY)
-          ctx.lineTo(endX, endY)
+          ctx.moveTo(sx, sy)
+          ctx.lineTo(ex, ey)
           ctx.stroke()
           dataCursor += size
           continue
         }
 
-        if (opcode === CMD_DRAW_RECTANGLE_LINE && size >= 6) {
+        if (opcode === CMD_DRAW_RECTANGLE_LINE && size >= 7) {
           const x = u32BitsToF32(cmdData[dataCursor + 0])
           const y = u32BitsToF32(cmdData[dataCursor + 1])
           const width = u32BitsToF32(cmdData[dataCursor + 2])
           const height = u32BitsToF32(cmdData[dataCursor + 3])
           const thickness = u32BitsToF32(cmdData[dataCursor + 4])
-          const packed = cmdData[dataCursor + 5]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 5])
+          const packed = cmdData[dataCursor + 6]
 
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
-          ctx.strokeRect(x, y, width, height)
+          const cx = x + width * 0.5
+          const cy = y + height * 0.5
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(rotation)
+          ctx.strokeRect(-width * 0.5, -height * 0.5, width, height)
+          ctx.restore()
           dataCursor += size
           continue
         }
 
-        if (opcode === CMD_DRAW_RECTANGLE_ROUNDED_LINE && size >= 7) {
+        if (opcode === CMD_DRAW_RECTANGLE_ROUNDED_LINE && size >= 8) {
           const x = u32BitsToF32(cmdData[dataCursor + 0])
           const y = u32BitsToF32(cmdData[dataCursor + 1])
           const width = u32BitsToF32(cmdData[dataCursor + 2])
           const height = u32BitsToF32(cmdData[dataCursor + 3])
           const radius = u32BitsToF32(cmdData[dataCursor + 4])
           const thickness = u32BitsToF32(cmdData[dataCursor + 5])
-          const packed = cmdData[dataCursor + 6]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 6])
+          const packed = cmdData[dataCursor + 7]
 
           const w = Math.max(0, width)
           const h = Math.max(0, height)
@@ -240,29 +278,35 @@ export function create_game_env(getMemory) {
 
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
+          const cx = x + w * 0.5
+          const cy = y + h * 0.5
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(rotation)
           ctx.beginPath()
-          ctx.moveTo(x + rr, y)
-          ctx.lineTo(x + w - rr, y)
-          ctx.arcTo(x + w, y, x + w, y + rr, rr)
-          ctx.lineTo(x + w, y + h - rr)
-          ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr)
-          ctx.lineTo(x + rr, y + h)
-          ctx.arcTo(x, y + h, x, y + h - rr, rr)
-          ctx.lineTo(x, y + rr)
-          ctx.arcTo(x, y, x + rr, y, rr)
+          ctx.moveTo(-w * 0.5 + rr, -h * 0.5)
+          ctx.lineTo(w * 0.5 - rr, -h * 0.5)
+          ctx.arcTo(w * 0.5, -h * 0.5, w * 0.5, -h * 0.5 + rr, rr)
+          ctx.lineTo(w * 0.5, h * 0.5 - rr)
+          ctx.arcTo(w * 0.5, h * 0.5, w * 0.5 - rr, h * 0.5, rr)
+          ctx.lineTo(-w * 0.5 + rr, h * 0.5)
+          ctx.arcTo(-w * 0.5, h * 0.5, -w * 0.5, h * 0.5 - rr, rr)
+          ctx.lineTo(-w * 0.5, -h * 0.5 + rr)
+          ctx.arcTo(-w * 0.5, -h * 0.5, -w * 0.5 + rr, -h * 0.5, rr)
           ctx.closePath()
           ctx.stroke()
+          ctx.restore()
 
           dataCursor += size
           continue
         }
 
-        if (opcode === CMD_DRAW_CIRCLE_LINE && size >= 5) {
+        if (opcode === CMD_DRAW_CIRCLE_LINE && size >= 6) {
           const centerX = u32BitsToF32(cmdData[dataCursor + 0])
           const centerY = u32BitsToF32(cmdData[dataCursor + 1])
           const radius = u32BitsToF32(cmdData[dataCursor + 2])
           const thickness = u32BitsToF32(cmdData[dataCursor + 3])
-          const packed = cmdData[dataCursor + 4]
+          const packed = cmdData[dataCursor + 5]
 
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
@@ -273,27 +317,34 @@ export function create_game_env(getMemory) {
           continue
         }
 
-        if (opcode === CMD_DRAW_TRIANGLE && size >= 7) {
+        if (opcode === CMD_DRAW_TRIANGLE && size >= 8) {
           const x1 = u32BitsToF32(cmdData[dataCursor + 0])
           const y1 = u32BitsToF32(cmdData[dataCursor + 1])
           const x2 = u32BitsToF32(cmdData[dataCursor + 2])
           const y2 = u32BitsToF32(cmdData[dataCursor + 3])
           const x3 = u32BitsToF32(cmdData[dataCursor + 4])
           const y3 = u32BitsToF32(cmdData[dataCursor + 5])
-          const packed = cmdData[dataCursor + 6]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 6])
+          const packed = cmdData[dataCursor + 7]
+
+          const cx = (x1 + x2 + x3) / 3
+          const cy = (y1 + y2 + y3) / 3
+          const [rx1, ry1] = rotatePoint(x1, y1, cx, cy, rotation)
+          const [rx2, ry2] = rotatePoint(x2, y2, cx, cy, rotation)
+          const [rx3, ry3] = rotatePoint(x3, y3, cx, cy, rotation)
 
           ctx.fillStyle = packedToCssColor(packed)
           ctx.beginPath()
-          ctx.moveTo(x1, y1)
-          ctx.lineTo(x2, y2)
-          ctx.lineTo(x3, y3)
+          ctx.moveTo(rx1, ry1)
+          ctx.lineTo(rx2, ry2)
+          ctx.lineTo(rx3, ry3)
           ctx.closePath()
           ctx.fill()
           dataCursor += size
           continue
         }
 
-        if (opcode === CMD_DRAW_TRIANGLE_LINE && size >= 8) {
+        if (opcode === CMD_DRAW_TRIANGLE_LINE && size >= 9) {
           const x1 = u32BitsToF32(cmdData[dataCursor + 0])
           const y1 = u32BitsToF32(cmdData[dataCursor + 1])
           const x2 = u32BitsToF32(cmdData[dataCursor + 2])
@@ -301,14 +352,21 @@ export function create_game_env(getMemory) {
           const x3 = u32BitsToF32(cmdData[dataCursor + 4])
           const y3 = u32BitsToF32(cmdData[dataCursor + 5])
           const thickness = u32BitsToF32(cmdData[dataCursor + 6])
-          const packed = cmdData[dataCursor + 7]
+          const rotation = u32BitsToF32(cmdData[dataCursor + 7])
+          const packed = cmdData[dataCursor + 8]
+
+          const cx = (x1 + x2 + x3) / 3
+          const cy = (y1 + y2 + y3) / 3
+          const [rx1, ry1] = rotatePoint(x1, y1, cx, cy, rotation)
+          const [rx2, ry2] = rotatePoint(x2, y2, cx, cy, rotation)
+          const [rx3, ry3] = rotatePoint(x3, y3, cx, cy, rotation)
 
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
           ctx.beginPath()
-          ctx.moveTo(x1, y1)
-          ctx.lineTo(x2, y2)
-          ctx.lineTo(x3, y3)
+          ctx.moveTo(rx1, ry1)
+          ctx.lineTo(rx2, ry2)
+          ctx.lineTo(rx3, ry3)
           ctx.closePath()
           ctx.stroke()
           dataCursor += size

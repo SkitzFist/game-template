@@ -49,8 +49,13 @@ init_window :: proc() {
 pos: [5]be.Vector2I = {{0, 0}, {600, 600}, {0, 1}, {0, 0}, {2560 - 400, 1440 - 400}}
 rect_line: be.RectangleI = {400, 400, 200, 200}
 acc: f32
+rotation: f32
 tick :: proc(dt: f32) {
 	acc += dt
+	rotation += dt * 0.25
+	if rotation > 2 * 3.14 {
+		rotation = 0.0
+	}
 	fps := int(1.0 / dt)
 	// log.info("fps:", fps)
 
@@ -98,7 +103,7 @@ tick :: proc(dt: f32) {
 	be.draw_circle_line(circle_center, circle_radius, thickness, be.RED)
 	rect_2 := rect_line
 	rect_2.y += rect_2.height
-	be.draw_rectangle_rounded_line(rect_2, 20, thickness, be.BROWN)
+	be.draw_rectangle_rounded_line(rect_2, 20, thickness, rotation, be.BROWN)
 
 	center: be.Vector2I = {be.get_window_width() / 2, be.get_window_height() / 2}
 	size: i32 : 500
@@ -106,6 +111,7 @@ tick :: proc(dt: f32) {
 		center,
 		be.Vector2I{center.x + size, center.y + size},
 		be.Vector2I{center.x, center.y + size},
+		rotation,
 		be.RED,
 	)
 
@@ -114,6 +120,7 @@ tick :: proc(dt: f32) {
 		be.Vector2I{center.x + size, center.y},
 		be.Vector2I{center.x + size, center.y + size},
 		5,
+		-rotation,
 		be.BLUE,
 	)
 
