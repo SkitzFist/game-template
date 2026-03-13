@@ -64,6 +64,11 @@ This high-level flow should stay the same for every backend.
 - The unsuffixed name is the overload group exposed to callers.
 - Keep parameter order and semantics identical between i32/f32 variants.
 - Keep signatures aligned across native and web backends.
+- For procedures that support rotation, include an explicit origin in every `*_rot` signature:
+  - i32 variant pattern: `draw_foo_i32_rot :: proc(..., rotation: f32, origin: Vector2I, color: Color)`
+  - f32 variant pattern: `draw_foo_f32_rot :: proc(..., rotation: f32, origin: Vector2F, color: Color)`
+  - `origin` is local to the shape, not screen-space/world-space (for example, `{0, 0}` is shape top-left/bounds-min).
+  - Non-rotated overloads should continue to work and should forward a sensible default origin (for example center/midpoint/centroid).
 
 ## How To Implement A New Drawing Procedure
 
@@ -91,6 +96,7 @@ This high-level flow should stay the same for every backend.
 4. **Verify parity across all backends**
    - Outputs should match as closely as possible.
    - Both variants (`_i32`, `_f32`) should compile and be callable from `be.draw_foo` on every supported backend.
+   - Validate with `odin check` only. Do not use `odin build` for verification in this repository.
 
 ## New Backend Bootstrap Checklist
 
@@ -121,7 +127,7 @@ When adding backend #3 (or later), use this quick start checklist.
    - Keep wire formats stable and argument order explicit.
 
 5. **Verify backend parity before merging**
-   - Build succeeds for native and all web/other targets.
+   - `odin check` succeeds for native and all web/other targets.
    - Visual output and semantics match existing backends for representative scenes.
    - No backend-specific API drift leaks into game code (`src/main.odin` remains backend-agnostic).
 
@@ -132,7 +138,7 @@ When adding backend #3 (or later), use this quick start checklist.
 - [ ] Used `Vector2*` / `Rectangle*` / `Color` where applicable.
 - [ ] Updated every currently supported backend implementation.
 - [ ] Updated any required backend bridge/decoder layer (for web: `src/web/game_env.js`).
-- [ ] Verified build/run on each supported target.
+- [ ] Verified with `odin check` on each supported target (for example `odin check src/` and `odin check src/ -target:js_wasm32`).
 
 ## Commit Message Style
 

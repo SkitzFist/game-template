@@ -31,13 +31,44 @@ rotate_point_f32 :: #force_inline proc(point, pivot: Vector2F, rotation: f32) ->
 	return {pivot.x + dx*c - dy*s, pivot.y + dx*s + dy*c}
 }
 
-rotate_triangle_f32 :: #force_inline proc(v1, v2, v3: Vector2F, rotation: f32) -> (Vector2F, Vector2F, Vector2F) {
+rotate_triangle_f32 :: #force_inline proc(v1, v2, v3: Vector2F, pivot: Vector2F, rotation: f32) -> (Vector2F, Vector2F, Vector2F) {
 	if rotation == 0 {
 		return v1, v2, v3
 	}
 
-	pivot := Vector2F{(v1.x + v2.x + v3.x) / 3.0, (v1.y + v2.y + v3.y) / 3.0}
 	return rotate_point_f32(v1, pivot, rotation), rotate_point_f32(v2, pivot, rotation), rotate_point_f32(v3, pivot, rotation)
+}
+
+line_origin_i32 :: #force_inline proc(start, end: Vector2I) -> Vector2I {
+	min_x := min(start.x, end.x)
+	min_y := min(start.y, end.y)
+	mid_x := (start.x + end.x) / 2
+	mid_y := (start.y + end.y) / 2
+	return {mid_x - min_x, mid_y - min_y}
+}
+
+line_origin_f32 :: #force_inline proc(start, end: Vector2F) -> Vector2F {
+	min_x := min(start.x, end.x)
+	min_y := min(start.y, end.y)
+	mid_x := (start.x + end.x) * 0.5
+	mid_y := (start.y + end.y) * 0.5
+	return {mid_x - min_x, mid_y - min_y}
+}
+
+triangle_origin_i32 :: #force_inline proc(v1, v2, v3: Vector2I) -> Vector2I {
+	min_x := min(v1.x, min(v2.x, v3.x))
+	min_y := min(v1.y, min(v2.y, v3.y))
+	centroid_x := (v1.x + v2.x + v3.x) / 3
+	centroid_y := (v1.y + v2.y + v3.y) / 3
+	return {centroid_x - min_x, centroid_y - min_y}
+}
+
+triangle_origin_f32 :: #force_inline proc(v1, v2, v3: Vector2F) -> Vector2F {
+	min_x := min(v1.x, min(v2.x, v3.x))
+	min_y := min(v1.y, min(v2.y, v3.y))
+	centroid_x := (v1.x + v2.x + v3.x) / 3.0
+	centroid_y := (v1.y + v2.y + v3.y) / 3.0
+	return {centroid_x - min_x, centroid_y - min_y}
 }
 
 // WINDOW
@@ -75,21 +106,21 @@ clear_background :: #force_inline proc(color: Color) {
 
 @(private = "file")
 draw_rectangle_i32 :: #force_inline proc(rect: RectangleI, color: Color) {
-	draw_rectangle_i32_rot(rect, 0.0, color)
+	draw_rectangle_i32_rot(rect, 0.0, Vector2I{rect.width / 2, rect.height / 2}, color)
 }
 
 @(private = "file")
-draw_rectangle_i32_rot :: #force_inline proc(rect: RectangleI, rotation: f32, color: Color) {
-	draw_rectangle_f32_rot(RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)}, rotation, color)
+draw_rectangle_i32_rot :: #force_inline proc(rect: RectangleI, rotation: f32, origin: Vector2I, color: Color) {
+	draw_rectangle_f32_rot(RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)}, rotation, convert_vector(origin), color)
 }
 
 @(private = "file")
 draw_rectangle_f32 :: #force_inline proc(rect: RectangleF, color: Color) {
-	draw_rectangle_f32_rot(rect, 0.0, color)
+	draw_rectangle_f32_rot(rect, 0.0, Vector2F{rect.width * 0.5, rect.height * 0.5}, color)
 }
 
 @(private = "file")
-draw_rectangle_f32_rot :: #force_inline proc(rect: RectangleF, rotation: f32, color: Color) {
+draw_rectangle_f32_rot :: #force_inline proc(rect: RectangleF, rotation: f32, origin: Vector2F, color: Color) {
 	if rotation == 0 {
 		rl.DrawRectangleRec(
 			rl.Rectangle{rect.x, rect.y, rect.width, rect.height},
@@ -99,8 +130,8 @@ draw_rectangle_f32_rot :: #force_inline proc(rect: RectangleF, rotation: f32, co
 	}
 
 	deg := rotation * (180.0 / f32(math.PI))
-	origin := rl.Vector2{rect.width * 0.5, rect.height * 0.5}
-	rl.DrawRectanglePro(rl.Rectangle{rect.x, rect.y, rect.width, rect.height}, origin, deg, convert_color(color))
+	local_origin := rl.Vector2{origin.x, origin.y}
+	rl.DrawRectanglePro(rl.Rectangle{rect.x, rect.y, rect.width, rect.height}, local_origin, deg, convert_color(color))
 }
 
 draw_rectangle :: proc {
@@ -120,6 +151,7 @@ draw_rectangle_rounded_i32 :: #force_inline proc(
 		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
 		corner_radius,
 		0.0,
+		Vector2F{f32(rect.width) * 0.5, f32(rect.height) * 0.5},
 		color,
 	)
 }
@@ -129,12 +161,14 @@ draw_rectangle_rounded_i32_rot :: #force_inline proc(
 	rect: RectangleI,
 	corner_radius: f32,
 	rotation: f32,
+	origin: Vector2I,
 	color: Color,
 ) {
 	draw_rectangle_rounded_f32_rot(
 		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
 		corner_radius,
 		rotation,
+		convert_vector(origin),
 		color,
 	)
 }
@@ -145,7 +179,7 @@ draw_rectangle_rounded_f32 :: #force_inline proc(
 	corner_radius: f32,
 	color: Color,
 ) {
-	draw_rectangle_rounded_f32_rot(rect, corner_radius, 0.0, color)
+	draw_rectangle_rounded_f32_rot(rect, corner_radius, 0.0, Vector2F{rect.width * 0.5, rect.height * 0.5}, color)
 }
 
 @(private = "file")
@@ -153,6 +187,7 @@ draw_rectangle_rounded_f32_rot :: #force_inline proc(
 	rect: RectangleF,
 	corner_radius: f32,
 	rotation: f32,
+	origin: Vector2F,
 	color: Color,
 ) {
 	if rect.width <= 0 || rect.height <= 0 {
@@ -187,8 +222,8 @@ draw_rectangle_rounded_f32_rot :: #force_inline proc(
 		segments,
 		convert_color(color),
 	)
-	if rotation == 0 {
-		return
+	if rotation != 0 {
+		_ = origin
 	}
 }
 
@@ -201,23 +236,24 @@ draw_rectangle_rounded :: proc {
 
 @(private = "file")
 draw_circle_i32 :: #force_inline proc(center: Vector2I, radius: f32, color: Color) {
-	draw_circle_i32_rot(center, radius, 0.0, color)
+	draw_circle_i32_rot(center, radius, 0.0, Vector2I{i32(radius), i32(radius)}, color)
 }
 
 @(private = "file")
-draw_circle_i32_rot :: #force_inline proc(center: Vector2I, radius: f32, rotation: f32, color: Color) {
-	draw_circle_f32_rot(convert_vector(center), radius, rotation, color)
+draw_circle_i32_rot :: #force_inline proc(center: Vector2I, radius: f32, rotation: f32, origin: Vector2I, color: Color) {
+	draw_circle_f32_rot(convert_vector(center), radius, rotation, convert_vector(origin), color)
 }
 
 @(private = "file")
 draw_circle_f32 :: #force_inline proc(center: Vector2F, radius: f32, color: Color) {
-	draw_circle_f32_rot(center, radius, 0.0, color)
+	draw_circle_f32_rot(center, radius, 0.0, Vector2F{radius, radius}, color)
 }
 
 @(private = "file")
-draw_circle_f32_rot :: #force_inline proc(center: Vector2F, radius: f32, rotation: f32, color: Color) {
-	_ = rotation
-	rl.DrawCircleV(convert_vector2f(center), radius, convert_color(color))
+draw_circle_f32_rot :: #force_inline proc(center: Vector2F, radius: f32, rotation: f32, origin: Vector2F, color: Color) {
+	pivot := Vector2F{center.x - radius + origin.x, center.y - radius + origin.y}
+	rotated_center := rotate_point_f32(center, pivot, rotation)
+	rl.DrawCircleV(convert_vector2f(rotated_center), radius, convert_color(color))
 }
 
 draw_circle :: proc {
@@ -229,22 +265,25 @@ draw_circle :: proc {
 
 @(private = "file")
 draw_triangle_i32 :: #force_inline proc(v1, v2, v3: Vector2I, color: Color) {
-	draw_triangle_i32_rot(v1, v2, v3, 0.0, color)
+	draw_triangle_i32_rot(v1, v2, v3, 0.0, triangle_origin_i32(v1, v2, v3), color)
 }
 
 @(private = "file")
-draw_triangle_i32_rot :: #force_inline proc(v1, v2, v3: Vector2I, rotation: f32, color: Color) {
-	draw_triangle_f32_rot(convert_vector(v1), convert_vector(v2), convert_vector(v3), rotation, color)
+draw_triangle_i32_rot :: #force_inline proc(v1, v2, v3: Vector2I, rotation: f32, origin: Vector2I, color: Color) {
+	draw_triangle_f32_rot(convert_vector(v1), convert_vector(v2), convert_vector(v3), rotation, convert_vector(origin), color)
 }
 
 @(private = "file")
 draw_triangle_f32 :: #force_inline proc(v1, v2, v3: Vector2F, color: Color) {
-	draw_triangle_f32_rot(v1, v2, v3, 0.0, color)
+	draw_triangle_f32_rot(v1, v2, v3, 0.0, triangle_origin_f32(v1, v2, v3), color)
 }
 
 @(private = "file")
-draw_triangle_f32_rot :: #force_inline proc(v1, v2, v3: Vector2F, rotation: f32, color: Color) {
-	v1r, v2r, v3r := rotate_triangle_f32(v1, v2, v3, rotation)
+draw_triangle_f32_rot :: #force_inline proc(v1, v2, v3: Vector2F, rotation: f32, origin: Vector2F, color: Color) {
+	min_x := min(v1.x, min(v2.x, v3.x))
+	min_y := min(v1.y, min(v2.y, v3.y))
+	pivot := Vector2F{min_x + origin.x, min_y + origin.y}
+	v1r, v2r, v3r := rotate_triangle_f32(v1, v2, v3, pivot, rotation)
 
 	area2 := (v2r.x-v1r.x)*(v3r.y-v1r.y) - (v2r.y-v1r.y)*(v3r.x-v1r.x)
 	if area2 > 0 {
@@ -264,26 +303,28 @@ draw_triangle :: proc {
 
 @(private = "file")
 draw_line_i32 :: #force_inline proc(start, end: Vector2I, thickness: f32, color: Color) {
-	draw_line_i32_rot(start, end, thickness, 0.0, color)
+	draw_line_i32_rot(start, end, thickness, 0.0, line_origin_i32(start, end), color)
 }
 
 @(private = "file")
-draw_line_i32_rot :: #force_inline proc(start, end: Vector2I, thickness: f32, rotation: f32, color: Color) {
-	draw_line_f32_rot(convert_vector(start), convert_vector(end), thickness, rotation, color)
+draw_line_i32_rot :: #force_inline proc(start, end: Vector2I, thickness: f32, rotation: f32, origin: Vector2I, color: Color) {
+	draw_line_f32_rot(convert_vector(start), convert_vector(end), thickness, rotation, convert_vector(origin), color)
 }
 
 @(private = "file")
 draw_line_f32 :: #force_inline proc(start, end: Vector2F, thickness: f32, color: Color) {
-	draw_line_f32_rot(start, end, thickness, 0.0, color)
+	draw_line_f32_rot(start, end, thickness, 0.0, line_origin_f32(start, end), color)
 }
 
 @(private = "file")
-draw_line_f32_rot :: #force_inline proc(start, end: Vector2F, thickness: f32, rotation: f32, color: Color) {
+draw_line_f32_rot :: #force_inline proc(start, end: Vector2F, thickness: f32, rotation: f32, origin: Vector2F, color: Color) {
 	if thickness <= 0 {
 		return
 	}
 
-	pivot := Vector2F{(start.x + end.x) * 0.5, (start.y + end.y) * 0.5}
+	min_x := min(start.x, end.x)
+	min_y := min(start.y, end.y)
+	pivot := Vector2F{min_x + origin.x, min_y + origin.y}
 	start_r := rotate_point_f32(start, pivot, rotation)
 	end_r := rotate_point_f32(end, pivot, rotation)
 	rl.DrawLineEx(convert_vector2f(start_r), convert_vector2f(end_r), thickness, convert_color(color))
@@ -325,26 +366,27 @@ draw_arc_line :: #force_inline proc(
 
 @(private = "file")
 draw_rectangle_line_i32 :: #force_inline proc(rect: RectangleI, thickness: f32, color: Color) {
-	draw_rectangle_line_i32_rot(rect, thickness, 0.0, color)
+	draw_rectangle_line_i32_rot(rect, thickness, 0.0, Vector2I{rect.width / 2, rect.height / 2}, color)
 }
 
 @(private = "file")
-draw_rectangle_line_i32_rot :: #force_inline proc(rect: RectangleI, thickness: f32, rotation: f32, color: Color) {
+draw_rectangle_line_i32_rot :: #force_inline proc(rect: RectangleI, thickness: f32, rotation: f32, origin: Vector2I, color: Color) {
 	draw_rectangle_line_f32_rot(
 		RectangleF{f32(rect.x), f32(rect.y), f32(rect.width), f32(rect.height)},
 		thickness,
 		rotation,
+		convert_vector(origin),
 		color,
 	)
 }
 
 @(private = "file")
 draw_rectangle_line_f32 :: #force_inline proc(rect: RectangleF, thickness: f32, color: Color) {
-	draw_rectangle_line_f32_rot(rect, thickness, 0.0, color)
+	draw_rectangle_line_f32_rot(rect, thickness, 0.0, Vector2F{rect.width * 0.5, rect.height * 0.5}, color)
 }
 
 @(private = "file")
-draw_rectangle_line_f32_rot :: #force_inline proc(rect: RectangleF, thickness: f32, rotation: f32, color: Color) {
+draw_rectangle_line_f32_rot :: #force_inline proc(rect: RectangleF, thickness: f32, rotation: f32, origin: Vector2F, color: Color) {
 	if rect.width <= 0 || rect.height <= 0 || thickness <= 0 {
 		return
 	}
@@ -353,8 +395,8 @@ draw_rectangle_line_f32_rot :: #force_inline proc(rect: RectangleF, thickness: f
 	top := rect.y
 	right := rect.x + rect.width
 	bottom := rect.y + rect.height
+	pivot := Vector2F{rect.x + origin.x, rect.y + origin.y}
 
-	pivot := Vector2F{(left + right) * 0.5, (top + bottom) * 0.5}
 	p1 := rotate_point_f32(Vector2F{left, top}, pivot, rotation)
 	p2 := rotate_point_f32(Vector2F{right, top}, pivot, rotation)
 	p3 := rotate_point_f32(Vector2F{right, bottom}, pivot, rotation)
@@ -384,6 +426,7 @@ draw_rectangle_rounded_line_i32 :: #force_inline proc(
 		corner_radius,
 		thickness,
 		0.0,
+		Vector2F{f32(rect.width) * 0.5, f32(rect.height) * 0.5},
 		color,
 	)
 }
@@ -393,6 +436,7 @@ draw_rectangle_rounded_line_i32_rot :: #force_inline proc(
 	rect: RectangleI,
 	corner_radius, thickness: f32,
 	rotation: f32,
+	origin: Vector2I,
 	color: Color,
 ) {
 	draw_rectangle_rounded_line_f32_rot(
@@ -400,6 +444,7 @@ draw_rectangle_rounded_line_i32_rot :: #force_inline proc(
 		corner_radius,
 		thickness,
 		rotation,
+		convert_vector(origin),
 		color,
 	)
 }
@@ -410,7 +455,7 @@ draw_rectangle_rounded_line_f32 :: #force_inline proc(
 	corner_radius, thickness: f32,
 	color: Color,
 ) {
-	draw_rectangle_rounded_line_f32_rot(rect, corner_radius, thickness, 0.0, color)
+	draw_rectangle_rounded_line_f32_rot(rect, corner_radius, thickness, 0.0, Vector2F{rect.width * 0.5, rect.height * 0.5}, color)
 }
 
 @(private = "file")
@@ -418,6 +463,7 @@ draw_rectangle_rounded_line_f32_rot :: #force_inline proc(
 	rect: RectangleF,
 	corner_radius, thickness: f32,
 	rotation: f32,
+	origin: Vector2F,
 	color: Color,
 ) {
 	if rect.width <= 0 || rect.height <= 0 || thickness <= 0 {
@@ -448,8 +494,7 @@ draw_rectangle_rounded_line_f32_rot :: #force_inline proc(
 	top := rect.y
 	right := rect.x + rect.width
 	bottom := rect.y + rect.height
-
-	pivot := Vector2F{(left + right) * 0.5, (top + bottom) * 0.5}
+	pivot := Vector2F{rect.x + origin.x, rect.y + origin.y}
 
 	top_start := rotate_point_f32(Vector2F{left + radius, top}, pivot, rotation)
 	top_end := rotate_point_f32(Vector2F{right - radius, top}, pivot, rotation)
@@ -528,7 +573,7 @@ draw_circle_line_i32 :: #force_inline proc(
 	radius, thickness: f32,
 	color: Color,
 ) {
-	draw_circle_line_i32_rot(center, radius, thickness, 0.0, color)
+	draw_circle_line_i32_rot(center, radius, thickness, 0.0, Vector2I{i32(radius), i32(radius)}, color)
 }
 
 @(private = "file")
@@ -536,9 +581,10 @@ draw_circle_line_i32_rot :: #force_inline proc(
 	center: Vector2I,
 	radius, thickness: f32,
 	rotation: f32,
+	origin: Vector2I,
 	color: Color,
 ) {
-	draw_circle_line_f32_rot(Vector2F{f32(center.x), f32(center.y)}, radius, thickness, rotation, color)
+	draw_circle_line_f32_rot(Vector2F{f32(center.x), f32(center.y)}, radius, thickness, rotation, convert_vector(origin), color)
 }
 
 @(private = "file")
@@ -547,7 +593,7 @@ draw_circle_line_f32 :: #force_inline proc(
 	radius, thickness: f32,
 	color: Color,
 ) {
-	draw_circle_line_f32_rot(center, radius, thickness, 0.0, color)
+	draw_circle_line_f32_rot(center, radius, thickness, 0.0, Vector2F{radius, radius}, color)
 }
 
 @(private = "file")
@@ -555,17 +601,19 @@ draw_circle_line_f32_rot :: #force_inline proc(
 	center: Vector2F,
 	radius, thickness: f32,
 	rotation: f32,
+	origin: Vector2F,
 	color: Color,
 ) {
-	_ = rotation
 	if radius <= 0 || thickness <= 0 {
 		return
 	}
 
+	pivot := Vector2F{center.x - radius + origin.x, center.y - radius + origin.y}
+	rotated_center := rotate_point_f32(center, pivot, rotation)
 	segment_count := max(i32(radius / 3), 24)
 	draw_arc_line(
-		center.x,
-		center.y,
+		rotated_center.x,
+		rotated_center.y,
 		radius,
 		0.0,
 		2.0 * f32(math.PI),
@@ -588,7 +636,7 @@ draw_triangle_line_i32 :: #force_inline proc(
 	thickness: f32,
 	color: Color,
 ) {
-	draw_triangle_line_i32_rot(v1, v2, v3, thickness, 0.0, color)
+	draw_triangle_line_i32_rot(v1, v2, v3, thickness, 0.0, triangle_origin_i32(v1, v2, v3), color)
 }
 
 @(private = "file")
@@ -596,9 +644,10 @@ draw_triangle_line_i32_rot :: #force_inline proc(
 	v1, v2, v3: Vector2I,
 	thickness: f32,
 	rotation: f32,
+	origin: Vector2I,
 	color: Color,
 ) {
-	draw_triangle_line_f32_rot(convert_vector(v1), convert_vector(v2), convert_vector(v3), thickness, rotation, color)
+	draw_triangle_line_f32_rot(convert_vector(v1), convert_vector(v2), convert_vector(v3), thickness, rotation, convert_vector(origin), color)
 }
 
 @(private = "file")
@@ -607,7 +656,7 @@ draw_triangle_line_f32 :: #force_inline proc(
 	thickness: f32,
 	color: Color,
 ) {
-	draw_triangle_line_f32_rot(v1, v2, v3, thickness, 0.0, color)
+	draw_triangle_line_f32_rot(v1, v2, v3, thickness, 0.0, triangle_origin_f32(v1, v2, v3), color)
 }
 
 @(private = "file")
@@ -615,13 +664,17 @@ draw_triangle_line_f32_rot :: #force_inline proc(
 	v1, v2, v3: Vector2F,
 	thickness: f32,
 	rotation: f32,
+	origin: Vector2F,
 	color: Color,
 ) {
 	if thickness <= 0 {
 		return
 	}
 
-	v1r, v2r, v3r := rotate_triangle_f32(v1, v2, v3, rotation)
+	min_x := min(v1.x, min(v2.x, v3.x))
+	min_y := min(v1.y, min(v2.y, v3.y))
+	pivot := Vector2F{min_x + origin.x, min_y + origin.y}
+	v1r, v2r, v3r := rotate_triangle_f32(v1, v2, v3, pivot, rotation)
 
 	draw_line(v1r, v2r, thickness, color)
 	draw_line(v2r, v3r, thickness, color)
