@@ -2,7 +2,6 @@ package game
 
 import "base:runtime"
 import "core:log"
-import "core:math"
 import "core:mem"
 
 import be "render_backend"
@@ -57,7 +56,8 @@ tick :: proc(dt: f32) {
 	be.begin_drawing()
 	be.clear_background(be.RAYWHITE)
 	// run render systems
-	examples_shape_draw()
+	// examples_shape_draw()
+	examples_shape_rotation_draw(dt)
 	// examples_arc_line(dt)
 
 	// run render_ui systems

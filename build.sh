@@ -16,7 +16,7 @@ if [ $PLATFORM == "WEB" ]; then
         -o:speed
 
     cp src/web/game.html $OUT_DIR/game.html
-    cp src/web/game.js $OUT_DIR/game.js
+    cp src/web/canvas_2d.js $OUT_DIR/canvas_2d.js
     cp src/web/game_env.js $OUT_DIR/game_env.js
     cp src/web/odin_env.js $OUT_DIR/odin_env.js
     echo "Build created in ${OUT_DIR}"
