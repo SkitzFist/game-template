@@ -46,16 +46,7 @@ init_window :: proc() {
 	be.init_window(2560, 1440, PROJECT_NAME)
 }
 
-pos: [5]be.Vector2I = {{0, 0}, {600, 600}, {0, 1}, {0, 0}, {2560 - 400, 1440 - 400}}
-rect_line: be.RectangleI = {400, 400, 200, 200}
-acc: f32
-rotation: f32
 tick :: proc(dt: f32) {
-	acc += dt
-	rotation += dt * 0.25
-	if rotation > 2 * 3.14 {
-		rotation = 0.0
-	}
 	fps := int(1.0 / dt)
 	// log.info("fps:", fps)
 
@@ -63,68 +54,13 @@ tick :: proc(dt: f32) {
 	// run input systems
 	// run update systems
 
-	for &vec in pos {
-		vec.y += max(i32(50 * dt), 1)
-
-
-		if vec.y > be.get_window_height() {
-			vec.y = 0
-		}
-	}
-
-	rect_line.x += max(i32(50 * dt), 1)
-
-	if rect_line.x >= be.get_window_width() {
-		rect_line.x = 0 - rect_line.width - 1
-	}
-
-	circle_radius: f32 = f32(rect_line.width / 2)
-	center_y: f32 = f32(rect_line.y + rect_line.width / 2)
-	circle_speed: f32 = 2.0
-	circle_y: f32 = center_y + math.sin(acc * circle_speed) * f32(rect_line.height)
-	circle_center: be.Vector2F = {f32(rect_line.x + rect_line.width / 2), circle_y}
-
 	be.begin_drawing()
 	be.clear_background(be.RAYWHITE)
 	// run render systems
+	examples_shape_draw()
+	// examples_arc_line(dt)
+
 	// run render_ui systems
-
-	//debug tests
-	be.draw_rectangle(be.RectangleI{pos[0].x, pos[0].y, 100, 100}, be.GOLD)
-	be.draw_circle(pos[1], 400, be.YELLOW)
-	be.draw_line(pos[2], pos[1], 1, be.DARKPURPLE)
-	be.draw_line(pos[3], be.convert_vector(circle_center), 1, be.DARKGREEN)
-
-	be.draw_rectangle_rounded(be.RectangleI{pos[4].x, pos[4].y, 200, 200}, 20, be.BLUE)
-
-	thickness :: 5.0
-
-	be.draw_rectangle_line(rect_line, thickness, be.SKYBLUE)
-	be.draw_circle_line(circle_center, circle_radius, thickness, be.RED)
-	rect_2 := rect_line
-	rect_2.y += rect_2.height
-	be.draw_rectangle_rounded_line(rect_2, 20, thickness, rotation, be.Vector2I{0, 0}, be.BROWN)
-
-	center: be.Vector2I = {be.get_window_width() / 2, be.get_window_height() / 2}
-	size: i32 : 500
-	be.draw_triangle(
-		center,
-		be.Vector2I{center.x + size, center.y + size},
-		be.Vector2I{center.x, center.y + size},
-		rotation,
-		be.Vector2I{0, 0},
-		be.RED,
-	)
-
-	be.draw_triangle_line(
-		center,
-		be.Vector2I{center.x + size, center.y},
-		be.Vector2I{center.x + size, center.y + size},
-		5,
-		-rotation,
-		be.Vector2I{0, 0},
-		be.BLUE,
-	)
 
 	be.end_drawing()
 }
@@ -149,3 +85,4 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	return err
 
 }
+
