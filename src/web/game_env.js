@@ -43,6 +43,26 @@ function rotatePoint(x, y, pivotX, pivotY, rotation) {
   return [pivotX + dx * c - dy * s, pivotY + dx * s + dy * c]
 }
 
+function clampPivot(value) {
+  return Math.min(1, Math.max(0, value))
+}
+
+function resolvePivotInBounds(x, y, width, height, pivotX, pivotY) {
+  return [
+    x + Math.max(0, width) * clampPivot(pivotX),
+    y + Math.max(0, height) * clampPivot(pivotY),
+  ]
+}
+
+function withPivotTransform(ctx, x, y, width, height, pivotX, pivotY, rotation, draw) {
+  const [worldPivotX, worldPivotY] = resolvePivotInBounds(x, y, width, height, pivotX, pivotY)
+  ctx.save()
+  ctx.translate(worldPivotX, worldPivotY)
+  ctx.rotate(rotation)
+  draw(worldPivotX, worldPivotY)
+  ctx.restore()
+}
+
 function ensureCanvas() {
   if (canvas && ctx) return true
 
@@ -151,19 +171,14 @@ export function create_game_env(getMemory) {
           const width = u32BitsToF32(cmdData[dataCursor + 2])
           const height = u32BitsToF32(cmdData[dataCursor + 3])
           const rotation = u32BitsToF32(cmdData[dataCursor + 4])
-          const originX = u32BitsToF32(cmdData[dataCursor + 5])
-          const originY = u32BitsToF32(cmdData[dataCursor + 6])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 5])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 6])
           const packed = cmdData[dataCursor + 7]
 
-          const pivotX = x + originX
-          const pivotY = y + originY
-
           ctx.fillStyle = packedToCssColor(packed)
-          ctx.save()
-          ctx.translate(pivotX, pivotY)
-          ctx.rotate(rotation)
-          ctx.fillRect(-originX, -originY, width, height)
-          ctx.restore()
+          withPivotTransform(ctx, x, y, width, height, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.fillRect(x - pivotX, y - pivotY, width, height)
+          })
           dataCursor += size
           continue
         }
@@ -175,38 +190,33 @@ export function create_game_env(getMemory) {
           const height = u32BitsToF32(cmdData[dataCursor + 3])
           const radius = u32BitsToF32(cmdData[dataCursor + 4])
           const rotation = u32BitsToF32(cmdData[dataCursor + 5])
-          const originX = u32BitsToF32(cmdData[dataCursor + 6])
-          const originY = u32BitsToF32(cmdData[dataCursor + 7])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 6])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 7])
           const packed = cmdData[dataCursor + 8]
 
           const w = Math.max(0, width)
           const h = Math.max(0, height)
           const rr = Math.max(0, Math.min(radius, Math.min(w, h) * 0.5))
 
-          const left = -originX
-          const top = -originY
-          const right = left + w
-          const bottom = top + h
-          const pivotX = x + originX
-          const pivotY = y + originY
-
           ctx.fillStyle = packedToCssColor(packed)
-          ctx.save()
-          ctx.translate(pivotX, pivotY)
-          ctx.rotate(rotation)
-          ctx.beginPath()
-          ctx.moveTo(left + rr, top)
-          ctx.lineTo(right - rr, top)
-          ctx.arcTo(right, top, right, top + rr, rr)
-          ctx.lineTo(right, bottom - rr)
-          ctx.arcTo(right, bottom, right - rr, bottom, rr)
-          ctx.lineTo(left + rr, bottom)
-          ctx.arcTo(left, bottom, left, bottom - rr, rr)
-          ctx.lineTo(left, top + rr)
-          ctx.arcTo(left, top, left + rr, top, rr)
-          ctx.closePath()
-          ctx.fill()
-          ctx.restore()
+          withPivotTransform(ctx, x, y, w, h, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            const left = x - pivotX
+            const top = y - pivotY
+            const right = left + w
+            const bottom = top + h
+            ctx.beginPath()
+            ctx.moveTo(left + rr, top)
+            ctx.lineTo(right - rr, top)
+            ctx.arcTo(right, top, right, top + rr, rr)
+            ctx.lineTo(right, bottom - rr)
+            ctx.arcTo(right, bottom, right - rr, bottom, rr)
+            ctx.lineTo(left + rr, bottom)
+            ctx.arcTo(left, bottom, left, bottom - rr, rr)
+            ctx.lineTo(left, top + rr)
+            ctx.arcTo(left, top, left + rr, top, rr)
+            ctx.closePath()
+            ctx.fill()
+          })
 
           dataCursor += size
           continue
@@ -217,18 +227,16 @@ export function create_game_env(getMemory) {
           const centerY = u32BitsToF32(cmdData[dataCursor + 1])
           const radius = u32BitsToF32(cmdData[dataCursor + 2])
           const rotation = u32BitsToF32(cmdData[dataCursor + 3])
-          const originX = u32BitsToF32(cmdData[dataCursor + 4])
-          const originY = u32BitsToF32(cmdData[dataCursor + 5])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 4])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 5])
           const packed = cmdData[dataCursor + 6]
 
-          const pivotX = centerX - radius + originX
-          const pivotY = centerY - radius + originY
-          const [drawX, drawY] = rotatePoint(centerX, centerY, pivotX, pivotY, rotation)
-
           ctx.fillStyle = packedToCssColor(packed)
-          ctx.beginPath()
-          ctx.arc(drawX, drawY, radius, 0, Math.PI * 2)
-          ctx.fill()
+          withPivotTransform(ctx, centerX - radius, centerY - radius, radius * 2, radius * 2, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.beginPath()
+            ctx.arc(centerX - pivotX, centerY - pivotY, radius, 0, Math.PI * 2)
+            ctx.fill()
+          })
           dataCursor += size
           continue
         }
@@ -240,23 +248,22 @@ export function create_game_env(getMemory) {
           const endY = u32BitsToF32(cmdData[dataCursor + 3])
           const thickness = u32BitsToF32(cmdData[dataCursor + 4])
           const rotation = u32BitsToF32(cmdData[dataCursor + 5])
-          const originX = u32BitsToF32(cmdData[dataCursor + 6])
-          const originY = u32BitsToF32(cmdData[dataCursor + 7])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 6])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 7])
           const packed = cmdData[dataCursor + 8]
 
           const minX = Math.min(startX, endX)
           const minY = Math.min(startY, endY)
-          const pivotX = minX + originX
-          const pivotY = minY + originY
-          const [sx, sy] = rotatePoint(startX, startY, pivotX, pivotY, rotation)
-          const [ex, ey] = rotatePoint(endX, endY, pivotX, pivotY, rotation)
-
+          const width = Math.max(startX, endX) - minX
+          const height = Math.max(startY, endY) - minY
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
-          ctx.beginPath()
-          ctx.moveTo(sx, sy)
-          ctx.lineTo(ex, ey)
-          ctx.stroke()
+          withPivotTransform(ctx, minX, minY, width, height, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.beginPath()
+            ctx.moveTo(startX - pivotX, startY - pivotY)
+            ctx.lineTo(endX - pivotX, endY - pivotY)
+            ctx.stroke()
+          })
           dataCursor += size
           continue
         }
@@ -268,19 +275,14 @@ export function create_game_env(getMemory) {
           const height = u32BitsToF32(cmdData[dataCursor + 3])
           const thickness = u32BitsToF32(cmdData[dataCursor + 4])
           const rotation = u32BitsToF32(cmdData[dataCursor + 5])
-          const originX = u32BitsToF32(cmdData[dataCursor + 6])
-          const originY = u32BitsToF32(cmdData[dataCursor + 7])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 6])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 7])
           const packed = cmdData[dataCursor + 8]
-          const pivotX = x + originX
-          const pivotY = y + originY
-
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
-          ctx.save()
-          ctx.translate(pivotX, pivotY)
-          ctx.rotate(rotation)
-          ctx.strokeRect(-originX, -originY, width, height)
-          ctx.restore()
+          withPivotTransform(ctx, x, y, width, height, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.strokeRect(x - pivotX, y - pivotY, width, height)
+          })
           dataCursor += size
           continue
         }
@@ -293,39 +295,34 @@ export function create_game_env(getMemory) {
           const radius = u32BitsToF32(cmdData[dataCursor + 4])
           const thickness = u32BitsToF32(cmdData[dataCursor + 5])
           const rotation = u32BitsToF32(cmdData[dataCursor + 6])
-          const originX = u32BitsToF32(cmdData[dataCursor + 7])
-          const originY = u32BitsToF32(cmdData[dataCursor + 8])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 7])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 8])
           const packed = cmdData[dataCursor + 9]
 
           const w = Math.max(0, width)
           const h = Math.max(0, height)
           const rr = Math.max(0, Math.min(radius, Math.min(w, h) * 0.5))
 
-          const left = -originX
-          const top = -originY
-          const right = left + w
-          const bottom = top + h
-          const pivotX = x + originX
-          const pivotY = y + originY
-
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
-          ctx.save()
-          ctx.translate(pivotX, pivotY)
-          ctx.rotate(rotation)
-          ctx.beginPath()
-          ctx.moveTo(left + rr, top)
-          ctx.lineTo(right - rr, top)
-          ctx.arcTo(right, top, right, top + rr, rr)
-          ctx.lineTo(right, bottom - rr)
-          ctx.arcTo(right, bottom, right - rr, bottom, rr)
-          ctx.lineTo(left + rr, bottom)
-          ctx.arcTo(left, bottom, left, bottom - rr, rr)
-          ctx.lineTo(left, top + rr)
-          ctx.arcTo(left, top, left + rr, top, rr)
-          ctx.closePath()
-          ctx.stroke()
-          ctx.restore()
+          withPivotTransform(ctx, x, y, w, h, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            const left = x - pivotX
+            const top = y - pivotY
+            const right = left + w
+            const bottom = top + h
+            ctx.beginPath()
+            ctx.moveTo(left + rr, top)
+            ctx.lineTo(right - rr, top)
+            ctx.arcTo(right, top, right, top + rr, rr)
+            ctx.lineTo(right, bottom - rr)
+            ctx.arcTo(right, bottom, right - rr, bottom, rr)
+            ctx.lineTo(left + rr, bottom)
+            ctx.arcTo(left, bottom, left, bottom - rr, rr)
+            ctx.lineTo(left, top + rr)
+            ctx.arcTo(left, top, left + rr, top, rr)
+            ctx.closePath()
+            ctx.stroke()
+          })
 
           dataCursor += size
           continue
@@ -337,19 +334,17 @@ export function create_game_env(getMemory) {
           const radius = u32BitsToF32(cmdData[dataCursor + 2])
           const thickness = u32BitsToF32(cmdData[dataCursor + 3])
           const rotation = u32BitsToF32(cmdData[dataCursor + 4])
-          const originX = u32BitsToF32(cmdData[dataCursor + 5])
-          const originY = u32BitsToF32(cmdData[dataCursor + 6])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 5])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 6])
           const packed = cmdData[dataCursor + 7]
-
-          const pivotX = centerX - radius + originX
-          const pivotY = centerY - radius + originY
-          const [drawX, drawY] = rotatePoint(centerX, centerY, pivotX, pivotY, rotation)
 
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
-          ctx.beginPath()
-          ctx.arc(drawX, drawY, radius, 0, Math.PI * 2)
-          ctx.stroke()
+          withPivotTransform(ctx, centerX - radius, centerY - radius, radius * 2, radius * 2, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.beginPath()
+            ctx.arc(centerX - pivotX, centerY - pivotY, radius, 0, Math.PI * 2)
+            ctx.stroke()
+          })
           dataCursor += size
           continue
         }
@@ -362,25 +357,23 @@ export function create_game_env(getMemory) {
           const x3 = u32BitsToF32(cmdData[dataCursor + 4])
           const y3 = u32BitsToF32(cmdData[dataCursor + 5])
           const rotation = u32BitsToF32(cmdData[dataCursor + 6])
-          const originX = u32BitsToF32(cmdData[dataCursor + 7])
-          const originY = u32BitsToF32(cmdData[dataCursor + 8])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 7])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 8])
           const packed = cmdData[dataCursor + 9]
 
           const minX = Math.min(x1, x2, x3)
           const minY = Math.min(y1, y2, y3)
-          const pivotX = minX + originX
-          const pivotY = minY + originY
-          const [rx1, ry1] = rotatePoint(x1, y1, pivotX, pivotY, rotation)
-          const [rx2, ry2] = rotatePoint(x2, y2, pivotX, pivotY, rotation)
-          const [rx3, ry3] = rotatePoint(x3, y3, pivotX, pivotY, rotation)
-
+          const width = Math.max(x1, x2, x3) - minX
+          const height = Math.max(y1, y2, y3) - minY
           ctx.fillStyle = packedToCssColor(packed)
-          ctx.beginPath()
-          ctx.moveTo(rx1, ry1)
-          ctx.lineTo(rx2, ry2)
-          ctx.lineTo(rx3, ry3)
-          ctx.closePath()
-          ctx.fill()
+          withPivotTransform(ctx, minX, minY, width, height, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.beginPath()
+            ctx.moveTo(x1 - pivotX, y1 - pivotY)
+            ctx.lineTo(x2 - pivotX, y2 - pivotY)
+            ctx.lineTo(x3 - pivotX, y3 - pivotY)
+            ctx.closePath()
+            ctx.fill()
+          })
           dataCursor += size
           continue
         }
@@ -394,26 +387,24 @@ export function create_game_env(getMemory) {
           const y3 = u32BitsToF32(cmdData[dataCursor + 5])
           const thickness = u32BitsToF32(cmdData[dataCursor + 6])
           const rotation = u32BitsToF32(cmdData[dataCursor + 7])
-          const originX = u32BitsToF32(cmdData[dataCursor + 8])
-          const originY = u32BitsToF32(cmdData[dataCursor + 9])
+          const pivotXNorm = u32BitsToF32(cmdData[dataCursor + 8])
+          const pivotYNorm = u32BitsToF32(cmdData[dataCursor + 9])
           const packed = cmdData[dataCursor + 10]
 
           const minX = Math.min(x1, x2, x3)
           const minY = Math.min(y1, y2, y3)
-          const pivotX = minX + originX
-          const pivotY = minY + originY
-          const [rx1, ry1] = rotatePoint(x1, y1, pivotX, pivotY, rotation)
-          const [rx2, ry2] = rotatePoint(x2, y2, pivotX, pivotY, rotation)
-          const [rx3, ry3] = rotatePoint(x3, y3, pivotX, pivotY, rotation)
-
+          const width = Math.max(x1, x2, x3) - minX
+          const height = Math.max(y1, y2, y3) - minY
           ctx.strokeStyle = packedToCssColor(packed)
           ctx.lineWidth = Math.max(0.5, thickness / canvasDisplayScale)
-          ctx.beginPath()
-          ctx.moveTo(rx1, ry1)
-          ctx.lineTo(rx2, ry2)
-          ctx.lineTo(rx3, ry3)
-          ctx.closePath()
-          ctx.stroke()
+          withPivotTransform(ctx, minX, minY, width, height, pivotXNorm, pivotYNorm, rotation, (pivotX, pivotY) => {
+            ctx.beginPath()
+            ctx.moveTo(x1 - pivotX, y1 - pivotY)
+            ctx.lineTo(x2 - pivotX, y2 - pivotY)
+            ctx.lineTo(x3 - pivotX, y3 - pivotY)
+            ctx.closePath()
+            ctx.stroke()
+          })
           dataCursor += size
           continue
         }

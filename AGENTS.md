@@ -64,11 +64,11 @@ This high-level flow should stay the same for every backend.
 - The unsuffixed name is the overload group exposed to callers.
 - Keep parameter order and semantics identical between i32/f32 variants.
 - Keep signatures aligned across native and web backends.
-- For procedures that support rotation, include an explicit origin in every `*_rot` signature:
-  - i32 variant pattern: `draw_foo_i32_rot :: proc(..., rotation: f32, origin: Vector2I, color: Color)`
-  - f32 variant pattern: `draw_foo_f32_rot :: proc(..., rotation: f32, origin: Vector2F, color: Color)`
-  - `origin` is local to the shape, not screen-space/world-space (for example, `{0, 0}` is shape top-left/bounds-min).
-  - Non-rotated overloads should continue to work and should forward a sensible default origin (for example center/midpoint/centroid).
+- For procedures that support rotation, include an explicit normalized pivot in every `*_rot` signature:
+  - i32 variant pattern: `draw_foo_i32_rot :: proc(..., rotation: f32, pivot: Vector2F, color: Color)`
+  - f32 variant pattern: `draw_foo_f32_rot :: proc(..., rotation: f32, pivot: Vector2F, color: Color)`
+  - `pivot` uses normalized local shape space from `0.0` to `1.0` on each axis (`{0.0, 0.0}` = top-left/bounds-min, `{1.0, 1.0}` = bottom-right/bounds-max).
+  - Non-rotated overloads should continue to work and should forward `PIVOT_TOP_LEFT` unless a different default is explicitly required.
 
 ## How To Implement A New Drawing Procedure
 

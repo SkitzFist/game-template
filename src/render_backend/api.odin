@@ -38,6 +38,10 @@ RAYWHITE :: Color{245, 245, 245, 255}
 Vector2F :: [2]f32
 Vector2I :: [2]i32
 
+PIVOT_TOP_LEFT :: Vector2F{0.0, 0.0}
+PIVOT_CENTER :: Vector2F{0.5, 0.5}
+PIVOT_BOTTOM_RIGHT :: Vector2F{1.0, 1.0}
+
 @(private = "file")
 convert_vector_i32_f32 :: #force_inline proc(vec: Vector2I) -> Vector2F {
 	return {f32(vec.x), f32(vec.y)}
@@ -51,6 +55,39 @@ convert_vector_f32_i32 :: #force_inline proc(vec: Vector2F) -> Vector2I {
 convert_vector :: proc {
 	convert_vector_i32_f32,
 	convert_vector_f32_i32,
+}
+
+clamp_pivot :: #force_inline proc(pivot: Vector2F) -> Vector2F {
+	clamped := pivot
+	if clamped.x < 0.0 {
+		clamped.x = 0.0
+	} else if clamped.x > 1.0 {
+		clamped.x = 1.0
+	}
+	if clamped.y < 0.0 {
+		clamped.y = 0.0
+	} else if clamped.y > 1.0 {
+		clamped.y = 1.0
+	}
+	return clamped
+}
+
+resolve_rect_pivot :: #force_inline proc(width, height: f32, pivot: Vector2F) -> Vector2F {
+	clamped := clamp_pivot(pivot)
+	return {width * clamped.x, height * clamped.y}
+}
+
+normalized_pivot_in_bounds :: #force_inline proc(
+	min_x, min_y, width, height, world_x, world_y: f32,
+) -> Vector2F {
+	pivot := Vector2F{0.5, 0.5}
+	if width > 0 {
+		pivot.x = (world_x - min_x) / width
+	}
+	if height > 0 {
+		pivot.y = (world_y - min_y) / height
+	}
+	return clamp_pivot(pivot)
 }
 
 RectangleI :: struct {
@@ -90,4 +127,3 @@ convert_rect :: proc {
 	convert_rect_i32_f32,
 	convert_rect_f32_i32,
 }
-
