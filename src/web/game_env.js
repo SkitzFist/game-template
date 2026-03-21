@@ -66,14 +66,14 @@ function updateCanvasLayout() {
 
   const viewportWidth = Math.max(1, window.innerWidth | 0)
   const viewportHeight = Math.max(1, window.innerHeight | 0)
-  const scale = Math.min(viewportWidth / targetWidth, viewportHeight / targetHeight)
-  canvasDisplayScale = scale > 0 ? scale : 1
+  canvas.width = viewportWidth
+  canvas.height = viewportHeight
+  canvasDisplayScale = 1
+  targetWidth = viewportWidth
+  targetHeight = viewportHeight
 
-  const displayWidth = Math.max(1, Math.floor(targetWidth * scale))
-  const displayHeight = Math.max(1, Math.floor(targetHeight * scale))
-
-  canvas.style.width = `${displayWidth}px`
-  canvas.style.height = `${displayHeight}px`
+  // canvas.style.width = `${viewportWidth}px`
+  // canvas.style.height = `${viewportHeight}px`
 }
 
 export function create_game_env(getMemory) {
