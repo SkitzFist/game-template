@@ -49,6 +49,50 @@ transform_local_point_f32 :: #force_inline proc(
 	return {world_pivot.x + rotated.x, world_pivot.y + rotated.y}
 }
 
+draw_convex_quad_filled :: #force_inline proc(p1, p2, p3, p4: Vector2F, color: Color) {
+	r1 := p1
+	r2 := p2
+	r3 := p3
+	r4 := p4
+	area2 := (r2.x - r1.x) * (r3.y - r1.y) - (r2.y - r1.y) * (r3.x - r1.x)
+	if area2 > 0 {
+		r2, r4 = r4, r2
+	}
+
+	fill := convert_color(color)
+	rl.DrawTriangle(convert_vector2f(r1), convert_vector2f(r2), convert_vector2f(r3), fill)
+	rl.DrawTriangle(convert_vector2f(r1), convert_vector2f(r3), convert_vector2f(r4), fill)
+}
+
+draw_transformed_rect_filled :: #force_inline proc(
+	rect: RectangleF,
+	pivot_world: Vector2F,
+	rotation: f32,
+	color: Color,
+) {
+	if rect.width <= 0 || rect.height <= 0 {
+		return
+	}
+
+	p1 := transform_local_point_f32(pivot_world, Vector2F{rect.x - pivot_world.x, rect.y - pivot_world.y}, rotation)
+	p2 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x + rect.width - pivot_world.x, rect.y - pivot_world.y},
+		rotation,
+	)
+	p3 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x + rect.width - pivot_world.x, rect.y + rect.height - pivot_world.y},
+		rotation,
+	)
+	p4 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x - pivot_world.x, rect.y + rect.height - pivot_world.y},
+		rotation,
+	)
+	draw_convex_quad_filled(p1, p2, p3, p4, color)
+}
+
 resolve_pivot_in_bounds_f32 :: #force_inline proc(
 	min_x, min_y, width, height: f32,
 	pivot: Vector2F,
@@ -157,35 +201,7 @@ draw_rectangle_f32_rot :: #force_inline proc(
 	}
 
 	pivot_world := resolve_pivot_in_bounds_f32(rect.x, rect.y, rect.width, rect.height, pivot)
-	p1 := transform_local_point_f32(pivot_world, Vector2F{rect.x - pivot_world.x, rect.y - pivot_world.y}, rotation)
-	p2 := transform_local_point_f32(
-		pivot_world,
-		Vector2F{rect.x + rect.width - pivot_world.x, rect.y - pivot_world.y},
-		rotation,
-	)
-	p3 := transform_local_point_f32(
-		pivot_world,
-		Vector2F{rect.x + rect.width - pivot_world.x, rect.y + rect.height - pivot_world.y},
-		rotation,
-	)
-	p4 := transform_local_point_f32(
-		pivot_world,
-		Vector2F{rect.x - pivot_world.x, rect.y + rect.height - pivot_world.y},
-		rotation,
-	)
-
-	r1 := p1
-	r2 := p2
-	r3 := p3
-	r4 := p4
-	area2 := (r2.x - r1.x) * (r3.y - r1.y) - (r2.y - r1.y) * (r3.x - r1.x)
-	if area2 > 0 {
-		r2, r4 = r4, r2
-	}
-
-	fill := convert_color(color)
-	rl.DrawTriangle(convert_vector2f(r1), convert_vector2f(r2), convert_vector2f(r3), fill)
-	rl.DrawTriangle(convert_vector2f(r1), convert_vector2f(r3), convert_vector2f(r4), fill)
+	draw_transformed_rect_filled(rect, pivot_world, rotation, color)
 }
 
 draw_rectangle :: proc {
@@ -244,48 +260,88 @@ draw_rectangle_rounded_f32_rot :: #force_inline proc(
 	pivot: Vector2F,
 	color: Color,
 ) {
-	rl.DrawRectangleRounded(
-		{rect.x, rect.y, rect.width, rect.height},
-		0.5,
-		8,
-		convert_color(color),
+	if rect.width <= 0 || rect.height <= 0 {
+		return
+	}
+
+	min_side := rect.width
+	if rect.height < min_side {
+		min_side = rect.height
+	}
+
+	max_radius := 0.5 * min_side
+	radius := corner_radius
+	if radius < 0 {
+		radius = 0
+	}
+	if radius > max_radius {
+		radius = max_radius
+	}
+
+	if radius == 0 {
+		draw_rectangle_f32_rot(rect, rotation, pivot, color)
+		return
+	}
+
+	roundness := radius / max_radius
+	segment_count := max(i32(radius / 2), 8)
+	if rotation == 0 {
+		rl.DrawRectangleRounded(
+			rl.Rectangle{rect.x, rect.y, rect.width, rect.height},
+			roundness,
+			segment_count,
+			convert_color(color),
+		)
+		return
+	}
+
+	pivot_world := resolve_pivot_in_bounds_f32(rect.x, rect.y, rect.width, rect.height, pivot)
+	draw_transformed_rect_filled(
+		RectangleF{rect.x + radius, rect.y, rect.width - radius * 2, rect.height},
+		pivot_world,
+		rotation,
+		color,
+	)
+	draw_transformed_rect_filled(
+		RectangleF{rect.x, rect.y + radius, radius, rect.height - radius * 2},
+		pivot_world,
+		rotation,
+		color,
+	)
+	draw_transformed_rect_filled(
+		RectangleF{rect.x + rect.width - radius, rect.y + radius, radius, rect.height - radius * 2},
+		pivot_world,
+		rotation,
+		color,
 	)
 
-	// if rect.width <= 0 || rect.height <= 0 {
-	// 	return
-	// }
+	deg := rotation * (180.0 / f32(math.PI))
+	fill := convert_color(color)
+	corner1 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x + radius - pivot_world.x, rect.y + radius - pivot_world.y},
+		rotation,
+	)
+	corner2 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x + rect.width - radius - pivot_world.x, rect.y + radius - pivot_world.y},
+		rotation,
+	)
+	corner3 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x + rect.width - radius - pivot_world.x, rect.y + rect.height - radius - pivot_world.y},
+		rotation,
+	)
+	corner4 := transform_local_point_f32(
+		pivot_world,
+		Vector2F{rect.x + radius - pivot_world.x, rect.y + rect.height - radius - pivot_world.y},
+		rotation,
+	)
 
-	// min_side := rect.width
-	// if rect.height < min_side {
-	// 	min_side = rect.height
-	// }
-
-	// max_radius := 0.5 * f32(min_side)
-	// radius := corner_radius
-	// if radius < 0 {
-	// 	radius = 0
-	// }
-	// if radius > max_radius {
-	// 	radius = max_radius
-	// }
-
-	// if radius == 0 {
-	// 	draw_rectangle(rect, color)
-	// 	return
-	// }
-
-	// roundness := radius / max_radius
-	// segments := i32(8)
-
-	// rl.DrawRectangleRounded(
-	// 	rl.Rectangle{rect.x, rect.y, rect.width, rect.height},
-	// 	roundness,
-	// 	segments,
-	// 	convert_color(color),
-	// )
-	// if rotation != 0 {
-	// 	_ = pivot
-	// }
+	rl.DrawRing(convert_vector2f(corner1), 0.0, radius, 180.0 + deg, 270.0 + deg, segment_count, fill)
+	rl.DrawRing(convert_vector2f(corner2), 0.0, radius, 270.0 + deg, 360.0 + deg, segment_count, fill)
+	rl.DrawRing(convert_vector2f(corner3), 0.0, radius, 0.0 + deg, 90.0 + deg, segment_count, fill)
+	rl.DrawRing(convert_vector2f(corner4), 0.0, radius, 90.0 + deg, 180.0 + deg, segment_count, fill)
 }
 
 draw_rectangle_rounded :: proc {
