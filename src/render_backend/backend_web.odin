@@ -37,7 +37,7 @@ command_data_count: int
 
 push_data_u32 :: #force_inline proc(value: u32) {
 	if command_data_count >= COMMAND_DATA_CAPACITY {
-		return
+		panic("render_backend: command data capacity exceeded")
 	}
 	command_data[command_data_count] = value
 	command_data_count += 1
@@ -56,6 +56,12 @@ pack_rgba :: #force_inline proc(color: Color) -> u32 {
 }
 
 push_command_header :: #force_inline proc(kind: Command_Type, data_word_count: u32) {
+	if command_count >= COMMAND_CAPACITY {
+		panic("render_backend: command capacity exceeded")
+	}
+	if command_data_count + int(data_word_count) > COMMAND_DATA_CAPACITY {
+		panic("render_backend: command data capacity exceeded")
+	}
 	command_type[command_count] = u32(kind)
 	command_data_size[command_count] = data_word_count
 	command_count += 1
