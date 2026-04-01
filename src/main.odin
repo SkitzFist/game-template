@@ -4,16 +4,20 @@ import "base:runtime"
 import "core:log"
 import "core:mem"
 
-import be "render_backend"
+import render "render"
+import window "window"
 
 tracking_allocator: mem.Tracking_Allocator
 
 main :: proc() {
 	context = init()
-	init_window()
 
+	window.create(1920, 1280, PROJECT_NAME)
+	defer (window.destroy())
 
-	for !be.should_close() {
+	for !window.should_close() {
+		window.poll_events()
+
 		//TODO should do my own dt calc
 		tick(0.016)
 	}
@@ -27,7 +31,9 @@ init :: proc() -> runtime.Context {
 	context.logger = log.create_console_logger(
 		opt = {.Level, .Time, .Short_File_Path, .Line, .Procedure, .Terminal_Color},
 	)
+
 	log.info("[MAIN] Init:", ODIN_OS, ODIN_ARCH)
+	log.info("[MAIN] Render backend:", render.BACKEND)
 
 	// Mem Tracker
 	when MEM_TRACK {
@@ -41,28 +47,18 @@ init :: proc() -> runtime.Context {
 	return context
 }
 
-init_window :: proc() {
-	be.init_window(2560, 1440, PROJECT_NAME)
-}
-
 tick :: proc(dt: f32) {
 	fps := int(1.0 / dt)
-	// log.info("fps:", fps)
 
-	// TODO should let
 	// run input systems
 	// run update systems
 
-	be.begin_drawing()
-	be.clear_background(be.RAYWHITE)
+	render.clear()
 	// run render systems
-	// examples_shape_draw()
-	examples_shape_rotation_draw(dt)
-	// examples_arc_line(dt)
 
 	// run render_ui systems
 
-	be.end_drawing()
+	window.swap_buffer()
 }
 
 shutdown :: proc() {
@@ -83,6 +79,5 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 
 	mem.tracking_allocator_clear(allocator)
 	return err
-
 }
 

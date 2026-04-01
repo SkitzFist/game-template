@@ -4,23 +4,26 @@ import "base:runtime"
 
 web_context: runtime.Context
 
-@(export)
-web_init :: proc "c" () {
-	context = init()
-	web_context = context
+/*
+	WEB IS CURRENTLY NOT IMPLEMENTED, THIS IS LEFTOVERS FROM CANVAS2D IMPL
+*/
+// @(export)
+// web_init :: proc "c" () {
+// 	context = init()
+// 	web_context = context
 
-	init_window()
-}
+// 	init_window()
+// }
 
-@(export)
-web_tick :: proc "c" (dt: f32) {
-	context = web_context
-	tick(dt)
-}
+// @(export)
+// web_tick :: proc "c" (dt: f32) {
+// 	context = web_context
+// 	tick(dt)
+// }
 
-@(export)
-web_shutdown :: proc "c" () {
-	context = web_context
-	shutdown()
-}
+// @(export)
+// web_shutdown :: proc "c" () {
+// 	context = web_context
+// 	shutdown()
+// }
 
