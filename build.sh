@@ -7,6 +7,8 @@ echo "Building..."
 echo "Target platform: ${PLATFORM}"
 
 if [ $PLATFORM == "WEB" ]; then
+    echo "WEB NOT AVAILABLE"
+    return
     OUT_DIR="build/web"
     mkdir -p $OUT_DIR
 
