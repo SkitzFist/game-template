@@ -4,22 +4,33 @@ import "base:runtime"
 import "core:log"
 import "core:mem"
 
-import render "render"
-import window "window"
+import "input"
+import "render"
+import "window"
+
+
+//debug
+import "core:fmt"
 
 tracking_allocator: mem.Tracking_Allocator
 
 main :: proc() {
 	context = init()
 
-	window.create(1920, 1280, PROJECT_NAME)
+	input.init()
+
+	window.create(1080, 1920, PROJECT_NAME)
 	defer (window.destroy())
 
+	prev, curr: f64 = window.get_time(), 0.0
+	dt: f64
 	for !window.should_close() {
-		window.poll_events()
+		curr = window.get_time()
+		dt = curr - prev
+		prev = curr
 
-		//TODO should do my own dt calc
-		tick(0.016)
+		window.poll_events()
+		tick(f32(dt))
 	}
 
 	shutdown()
@@ -47,18 +58,25 @@ init :: proc() -> runtime.Context {
 	return context
 }
 
+i: int
+word: [100]u8
+
 tick :: proc(dt: f32) {
-	fps := int(1.0 / dt)
-
 	// run input systems
-	// run update systems
+	if input.is_pressed(input.Key.ESCAPE) {
+		window.set_close(true)
+	}
 
+	// run update systems
 	render.clear()
 	// run render systems
 
 	// run render_ui systems
 
 	window.swap_buffer()
+
+	// reset input
+	input.post_frame()
 }
 
 shutdown :: proc() {
