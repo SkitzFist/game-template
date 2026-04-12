@@ -138,7 +138,7 @@ key_lookup: [349]input.Key = {
 }
 
 
-mouse_button_lookup: [5]input.Mouse_Button = {
+mouse_button_lookup: [len(input.Mouse_Button)]input.Mouse_Button = {
 	0 = .LEFT,
 	1 = .RIGHT,
 	2 = .SCROLL,

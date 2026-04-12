@@ -16,7 +16,9 @@ window_handle: glfw.WindowHandle
 @(private)
 DEFAULT_CONTEXT: runtime.Context
 
-create :: proc(width, height: i32, title: cstring) -> (success: bool) {
+width, height: i32
+
+create_fullscreen :: proc(title: cstring) -> (success: bool) {
 	//store odin context so we can use it in proc "c" functions
 	DEFAULT_CONTEXT = context
 
@@ -29,26 +31,31 @@ create :: proc(width, height: i32, title: cstring) -> (success: bool) {
 
 	render.pre_window_create()
 
-	// debug, send to my portrait mode monitor
-	monitor := glfw.GetMonitors()[1]
+	monitor := glfw.GetMonitors()[0]
+	mode := glfw.GetVideoMode(monitor)
+	glfw.WindowHint(glfw.RED_BITS, mode.red_bits)
+	glfw.WindowHint(glfw.GREEN_BITS, mode.green_bits)
+	glfw.WindowHint(glfw.BLUE_BITS, mode.blue_bits)
+	glfw.WindowHint(glfw.REFRESH_RATE, mode.refresh_rate)
+	glfw.WindowHint(glfw.SAMPLES, 8)
 
-	window_handle = glfw.CreateWindow(width, height, title, monitor, nil)
+	window_handle = glfw.CreateWindow(mode.width, mode.height, title, monitor, nil)
 	if window_handle == nil {
 		log.info("[WINDOW] GLFW failed to create window handle")
 		return false
 	}
 
-	// glfw.SetWindowMonitor(window_handle, nil, 0, 0, width - 100, height - 100, 144)
-
 	render.attach_to_window(window_handle)
 	glfw.SwapInterval(1)
 
-	//hook up input
 	glfw.SetKeyCallback(window_handle, key_callback)
 	glfw.SetCharCallback(window_handle, char_callback)
 	glfw.SetCursorPosCallback(window_handle, cursor_pos_callback)
 	glfw.SetMouseButtonCallback(window_handle, mouse_button_callback)
 	glfw.SetScrollCallback(window_handle, mouse_scroll_callback)
+	glfw.SetFramebufferSizeCallback(window_handle, frame_buffer_size_callback)
+
+	width, height = glfw.GetFramebufferSize(window_handle)
 
 	log.info("[WINDOW] created")
 
@@ -146,9 +153,9 @@ mouse_button_callback: glfw.MouseButtonProc : proc "c" (
 	button, action, mods: i32,
 ) {
 	context = DEFAULT_CONTEXT
-	fmt.println("button:", button, "action:", action, "mods:", mods)
+	// fmt.println("button:", button, "action:", action, "mods:", mods)
 
-	if button < 0 || button > 4 {
+	if button < 0 || button >= len(input.Mouse_Button) {
 		panic("Unsupported button")
 	}
 
@@ -168,5 +175,17 @@ mouse_scroll_callback: glfw.ScrollProc : proc "c" (
 ) {
 	context = DEFAULT_CONTEXT
 	log.info("[Window](mouse_scroll_callback): xOffset:", xOffset, ", yOffset:", yOffset)
+}
+
+@(private)
+frame_buffer_size_callback: glfw.FramebufferSizeProc : proc "c" (
+	window: glfw.WindowHandle,
+	w, h: i32,
+) {
+	context = DEFAULT_CONTEXT
+
+	log.info("frame buffer size changed:", width, ",", height)
+	width, height = w, h
+	render.on_frame_buffer_size_changed(width, height)
 }
 

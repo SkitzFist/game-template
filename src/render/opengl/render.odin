@@ -1,10 +1,17 @@
 package opengl
 
+import "core:log"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
+@(private)
+TAG :: "[OPENGL]"
+
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 1
+
+@(private)
+render_width, render_height: i32
 
 // ---- WINDOW ---- //
 pre_window_create :: proc() {
@@ -14,12 +21,41 @@ pre_window_create :: proc() {
 }
 
 attach_to_window :: proc(window_handle: glfw.WindowHandle) {
-
 	glfw.MakeContextCurrent(window_handle)
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
+
+	render_width, render_height = glfw.GetFramebufferSize(window_handle)
+
+	gl.Viewport(0, 0, render_width, render_height)
+
+	log.info(TAG, "Attached to window")
 }
 
-clear :: proc() {
+on_frame_buffer_size_changed :: proc(width, height: i32) {
+	gl.Viewport(0, 0, width, height)
+	render_width = width
+	render_height = height
+}
+
+shutdown :: proc() {
+	delete(vertexes)
+	gl.DeleteVertexArrays(1, &vao)
+	gl.DeleteBuffers(1, &vbo)
+	gl.DeleteProgram(primitive_solid_shader)
+}
+
+// --- FRAME --- //
+draw_begin :: proc() {
+	clear_dynamic_array(&vertexes)
+}
+
+draw_end :: proc() {
+	draw_primitives()
+}
+
+
+// --- DRAW --- //
+clear_screen :: proc() {
 	gl.ClearColor(0, 0, 0, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
