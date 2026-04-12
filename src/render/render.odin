@@ -17,9 +17,35 @@ attach_to_window :: proc(window_handle: glfw.WindowHandle) {
 	}
 }
 
-clear :: proc() {
+on_frame_buffer_size_changed :: proc(width, height: i32) {
 	when BACKEND == .OPENGL {
-		gl.clear()
+		gl.on_frame_buffer_size_changed(width, height)
+	}
+}
+
+shutdown :: proc() {
+	when BACKEND == .OPENGL {
+		gl.shutdown()
+	}
+}
+
+// ---- FRAME ----
+
+draw_begin :: proc() {
+	when BACKEND == .OPENGL {
+		gl.draw_begin()
+	}
+}
+
+draw_end :: proc() {
+	when BACKEND == .OPENGL {
+		gl.draw_end()
+	}
+}
+
+clear_screen :: proc() {
+	when BACKEND == .OPENGL {
+		gl.clear_screen()
 	}
 }
 
