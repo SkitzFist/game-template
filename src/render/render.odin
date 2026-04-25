@@ -43,7 +43,7 @@ draw_end :: proc() {
 	}
 }
 
-clear_screen :: proc() {
+clear_screen :: proc(color: Color) {
 	when BACKEND == .OPENGL {
 		gl.clear_screen()
 	}

@@ -28,6 +28,10 @@ attach_to_window :: proc(window_handle: glfw.WindowHandle) {
 
 	gl.Viewport(0, 0, render_width, render_height)
 
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+	gl.FrontFace(gl.CW)
+
 	log.info(TAG, "Attached to window")
 }
 

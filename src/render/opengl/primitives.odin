@@ -6,7 +6,7 @@ vertexes: [dynamic]f32
 vbo, vao: u32
 primitive_solid_shader: u32
 
-VERTEX_FLOATS_PER_VERTEX :: 7
+VERTEX_FLOATS_PER_VERTEX :: 6
 VERTEX_STRIDE_BYTES :: VERTEX_FLOATS_PER_VERTEX * size_of(f32)
 
 basic_vert := #load("../../shaders/basic.vert")
@@ -30,8 +30,8 @@ init_primitives :: proc() {
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, VERTEX_STRIDE_BYTES, 0)
-	gl.VertexAttribPointer(1, 4, gl.FLOAT, gl.FALSE, VERTEX_STRIDE_BYTES, 3 * size_of(f32))
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, gl.FALSE, VERTEX_STRIDE_BYTES, 0)
+	gl.VertexAttribPointer(1, 4, gl.FLOAT, gl.FALSE, VERTEX_STRIDE_BYTES, 2 * size_of(f32))
 
 	primitive_solid_shader = create_shader_u8(basic_vert, basic_frag)
 
@@ -42,10 +42,9 @@ init_primitives :: proc() {
 }
 
 @(private)
-append_vertex :: proc(x, y, z: f32, color: [4]f32) {
+append_vertex :: proc(x, y: f32, color: [4]f32) {
 	append_elem(&vertexes, x)
 	append_elem(&vertexes, y)
-	append_elem(&vertexes, z)
 	append_elem(&vertexes, color.x)
 	append_elem(&vertexes, color.y)
 	append_elem(&vertexes, color.z)
@@ -69,9 +68,9 @@ add_triangle_screen_space :: proc(p1, p2, p3: [2]f32, color: [4]f32) {
 
 @(private)
 add_triangle_clip_space :: proc(x1, y1, x2, y2, x3, y3: f32, color: [4]f32) {
-	append_vertex(x1, y1, 0.0, color)
-	append_vertex(x2, y2, 0.0, color)
-	append_vertex(x3, y3, 0.0, color)
+	append_vertex(x1, y1, color)
+	append_vertex(x2, y2, color)
+	append_vertex(x3, y3, color)
 }
 
 add_triangle :: proc {
@@ -91,32 +90,32 @@ add_rectangle_clip_space :: proc(x, y, width, height: f32, color: [4]f32) {
 	// *---+
 	// |---|
 	// +---+
-	append_vertex(x, y, 0.0, color)
+	append_vertex(x, y, color)
 
 	// +---*
 	// |---|
 	// +---+
-	append_vertex(x + width, y, 0.0, color)
+	append_vertex(x + width, y, color)
 
 	// +---+
 	// |---|
 	// *---+
-	append_vertex(x, y - height, 0.0, color)
+	append_vertex(x, y - height, color)
 
 	// +---+
 	// |---|
 	// *---+
-	append_vertex(x, y - height, 0.0, color)
+	append_vertex(x, y - height, color)
 
 	// +---*
 	// |---|
 	// +---+
-	append_vertex(x + width, y, 0.0, color)
+	append_vertex(x + width, y, color)
 
 	// +---+
 	// |---|
 	// +---*
-	append_vertex(x + width, y - height, 0.0, color)
+	append_vertex(x + width, y - height, color)
 }
 
 add_rectangle :: proc {
@@ -137,3 +136,4 @@ draw_primitives :: proc() {
 
 	gl.DrawArrays(gl.TRIANGLES, 0, i32(len(vertexes) / VERTEX_FLOATS_PER_VERTEX))
 }
+

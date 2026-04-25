@@ -5,7 +5,7 @@ import "core:log"
 import "core:mem"
 
 import "input"
-import "render"
+import r "render"
 import "window"
 
 //debug
@@ -47,7 +47,7 @@ init :: proc() -> runtime.Context {
 	)
 
 	log.info("[MAIN] Init:", ODIN_OS, ODIN_ARCH)
-	log.info("[MAIN] Render backend:", render.BACKEND)
+	log.info("[MAIN] Render backend:", r.BACKEND)
 
 	// Mem Tracker
 	when MEM_TRACK {
@@ -72,10 +72,10 @@ tick :: proc(dt: f32) {
 	}
 
 	// run update systems
-	render.clear_screen()
+	r.clear_screen(r.BLACK)
 
 	// run render systems
-	render.draw_begin()
+	r.draw_begin()
 
 	window_width := f32(window.width)
 	window_height := f32(window.height)
@@ -85,12 +85,11 @@ tick :: proc(dt: f32) {
 	x := math.abs(f32(math.sin(window.get_time() * 0.5)) * window_width / 2)
 	gl.add_triangle({0, 0}, {x, window_height / 2}, {0, window_height}, {0.2, 1.0, 0.2, 1.0})
 	gl.add_triangle(
-		{(window_width), 0},
 		{window_width / 2 + x, window_height / 2},
+		{(window_width), 0},
 		{window_width, window_height},
 		{0.2, 0.2, 0.8, 0.5},
 	)
-
 
 	// run render_ui systems
 
@@ -102,7 +101,7 @@ tick :: proc(dt: f32) {
 }
 
 shutdown :: proc() {
-	render.shutdown()
+	r.shutdown()
 
 
 	log.info("[MAIN] shutting down...")
