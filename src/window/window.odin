@@ -31,7 +31,7 @@ create_fullscreen :: proc(title: cstring) -> (success: bool) {
 
 	render.pre_window_create()
 
-	monitor := glfw.GetMonitors()[0]
+	monitor := glfw.GetMonitors()[1]
 	mode := glfw.GetVideoMode(monitor)
 	glfw.WindowHint(glfw.RED_BITS, mode.red_bits)
 	glfw.WindowHint(glfw.GREEN_BITS, mode.green_bits)
