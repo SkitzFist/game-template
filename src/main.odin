@@ -9,8 +9,8 @@ import r "render"
 import "window"
 
 //debug
+import "core:fmt"
 import "core:math"
-import gl "render/opengl"
 
 tracking_allocator: mem.Tracking_Allocator
 
@@ -24,7 +24,8 @@ main :: proc() {
 	window.create_fullscreen(PROJECT_NAME)
 	defer (window.destroy())
 
-	gl.init_primitives()
+	r.init()
+
 	prev, curr: f64 = window.get_time(), 0.0
 	dt: f64
 	for !window.should_close() {
@@ -42,9 +43,7 @@ main :: proc() {
 init :: proc() -> runtime.Context {
 
 	context = runtime.default_context()
-	context.logger = log.create_console_logger(
-		opt = {.Level, .Time, .Line, .Procedure, .Terminal_Color},
-	)
+	context.logger = log.create_console_logger(opt = {.Level, .Line, .Terminal_Color})
 
 	log.info("[MAIN] Init:", ODIN_OS, ODIN_ARCH)
 	log.info("[MAIN] Render backend:", r.BACKEND)
@@ -61,11 +60,8 @@ init :: proc() -> runtime.Context {
 	return context
 }
 
-i: int
-word: [100]u8
-
 tick :: proc(dt: f32) {
-	// fmt.println("Fps:", 1 / dt)
+	fmt.println("Fps:", 1 / dt)
 	// run input systems
 	if input.is_pressed(input.Key.ESCAPE) {
 		window.set_close(true)
@@ -79,21 +75,66 @@ tick :: proc(dt: f32) {
 
 	window_width := f32(window.width)
 	window_height := f32(window.height)
+	time := window.get_time()
+	cell_size: f32 = 5
+	amplitude := cell_size * 0.35
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
 
-	gl.add_rectangle(-0.5, 0.5, 1.0, 1.0, {0, 0, 1.0, 1.0})
+	for row in 0 ..< rows {
+		y1 := f32(row) * cell_size
+		y2 := y1 + cell_size
 
-	x := math.abs(f32(math.sin(window.get_time() * 0.5)) * window_width / 2)
-	gl.add_triangle({0, 0}, {x, window_height / 2}, {0, window_height}, {0.2, 1.0, 0.2, 1.0})
-	gl.add_triangle(
-		{window_width / 2 + x, window_height / 2},
-		{(window_width), 0},
-		{window_width, window_height},
-		{0.2, 0.2, 0.8, 0.5},
-	)
+		for col in 0 ..< cols {
+			x1 := f32(col) * cell_size
+			x2 := x1 + cell_size
 
-	// run render_ui systems
+			top_left :=
+				y1 + f32(math.sin(time * 1.30 + f64(col) * 0.35 + f64(row) * 0.18)) * amplitude
+			top_right :=
+				y1 + f32(math.sin(time * 1.10 + f64(col + 1) * 0.35 + f64(row) * 0.18)) * amplitude
+			bottom_left :=
+				y2 + f32(math.sin(time * 1.20 + f64(col) * 0.35 + f64(row + 1) * 0.18)) * amplitude
+			bottom_right :=
+				y2 +
+				f32(math.sin(time * 1.00 + f64(col + 1) * 0.35 + f64(row + 1) * 0.18)) * amplitude
 
-	gl.draw_end()
+			pulse_a := f32(0.5 + 0.5 * math.sin(time * 2.00 + f64(col) * 0.70 + f64(row) * 0.90))
+			pulse_b := f32(
+				0.5 + 0.5 * math.sin(time * 1.70 + f64(col) * 0.50 - f64(row) * 0.60 + 1.57),
+			)
+
+			color_a: r.Color = {
+				0.15 + 0.35 * pulse_a,
+				0.25 + 0.25 * (1 - pulse_a),
+				0.75 + 0.20 * pulse_a,
+				1,
+			}
+			color_b: r.Color = {
+				0.85 - 0.50 * pulse_b,
+				0.20 + 0.60 * pulse_b,
+				0.35 + 0.45 * (1 - pulse_b),
+				1,
+			}
+
+			if (row + col) % 2 == 0 {
+				r.draw_triangle({x1, top_left}, {x2, top_right}, {x2, bottom_right}, color_a)
+				r.draw_triangle({x1, top_left}, {x2, bottom_right}, {x1, bottom_left}, color_b)
+			} else {
+				r.draw_triangle({x1, top_left}, {x2, top_right}, {x1, bottom_left}, color_a)
+				r.draw_triangle({x2, top_right}, {x2, bottom_right}, {x1, bottom_left}, color_b)
+			}
+		}
+	}
+
+	// r.draw_triangle(
+	// 	{0, window_height},
+	// 	{window_width / 2, 0},
+	// 	{window_width, window_height},
+	// 	r.BLUE,
+	// )
+
+	r.draw_end()
 	window.swap_buffer()
 
 	// reset input

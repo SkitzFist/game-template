@@ -17,6 +17,12 @@ attach_to_window :: proc(window_handle: glfw.WindowHandle) {
 	}
 }
 
+init :: proc() {
+	when BACKEND == .OPENGL {
+		gl.init()
+	}
+}
+
 on_frame_buffer_size_changed :: proc(width, height: i32) {
 	when BACKEND == .OPENGL {
 		gl.on_frame_buffer_size_changed(width, height)
@@ -27,6 +33,9 @@ shutdown :: proc() {
 	when BACKEND == .OPENGL {
 		gl.shutdown()
 	}
+
+	delete(draw_commands)
+	delete(draw_count)
 }
 
 // ---- FRAME ----
@@ -39,7 +48,9 @@ draw_begin :: proc() {
 
 draw_end :: proc() {
 	when BACKEND == .OPENGL {
-		gl.draw_end()
+		gl.data_to_gpu()
+
+		draw_command_buffer()
 	}
 }
 

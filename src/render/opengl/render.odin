@@ -1,6 +1,7 @@
 package opengl
 
 import "core:log"
+import "core:terminal"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
@@ -35,6 +36,13 @@ attach_to_window :: proc(window_handle: glfw.WindowHandle) {
 	log.info(TAG, "Attached to window")
 }
 
+init :: proc() {
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	init_primitives()
+}
+
 on_frame_buffer_size_changed :: proc(width, height: i32) {
 	gl.Viewport(0, 0, width, height)
 	render_width = width
@@ -42,19 +50,22 @@ on_frame_buffer_size_changed :: proc(width, height: i32) {
 }
 
 shutdown :: proc() {
-	delete(vertexes)
-	gl.DeleteVertexArrays(1, &vao)
-	gl.DeleteBuffers(1, &vbo)
+	delete(triangles.vertexes)
+	gl.DeleteVertexArrays(1, &triangles.vao)
+	gl.DeleteBuffers(1, &triangles.vbo)
 	gl.DeleteProgram(primitive_solid_shader)
 }
 
 // --- FRAME --- //
 draw_begin :: proc() {
-	clear_dynamic_array(&vertexes)
+	triangles.count = 0
+	triangles.is_dirty = false
+	triangles.last_drawn = 0
 }
 
 draw_end :: proc() {
-	draw_primitives()
+	//upload data
+	// data_to_gpu()
 }
 
 
