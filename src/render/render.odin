@@ -56,7 +56,11 @@ draw_end :: proc() {
 
 clear_screen :: proc(color: Color) {
 	when BACKEND == .OPENGL {
-		gl.clear_screen()
+		gl.clear_screen(
+			f32(color[0]) / 255.0,
+			f32(color[1]) / 255.0,
+			f32(color[2]) / 255.0,
+			f32(color[3]) / 255.0,
+		)
 	}
 }
-

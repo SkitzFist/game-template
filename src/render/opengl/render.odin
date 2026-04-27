@@ -70,8 +70,7 @@ draw_end :: proc() {
 
 
 // --- DRAW --- //
-clear_screen :: proc() {
-	gl.ClearColor(0, 0, 0, 1.0)
+clear_screen :: proc(r, g, b, a: f32) {
+	gl.ClearColor(r, g, b, a)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
-
