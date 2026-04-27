@@ -104,18 +104,18 @@ tick :: proc(dt: f32) {
 				0.5 + 0.5 * math.sin(time * 1.70 + f64(col) * 0.50 - f64(row) * 0.60 + 1.57),
 			)
 
-			color_a: r.Color = {
-				0.15 + 0.35 * pulse_a,
-				0.25 + 0.25 * (1 - pulse_a),
-				0.75 + 0.20 * pulse_a,
-				1,
-			}
-			color_b: r.Color = {
-				0.85 - 0.50 * pulse_b,
-				0.20 + 0.60 * pulse_b,
-				0.35 + 0.45 * (1 - pulse_b),
-				1,
-			}
+			color_a := r.rgba8(
+				r.channel_u8(0.15 + 0.35 * pulse_a),
+				r.channel_u8(0.25 + 0.25 * (1 - pulse_a)),
+				r.channel_u8(0.75 + 0.20 * pulse_a),
+				255,
+			)
+			color_b := r.rgba8(
+				r.channel_u8(0.85 - 0.50 * pulse_b),
+				r.channel_u8(0.20 + 0.60 * pulse_b),
+				r.channel_u8(0.35 + 0.45 * (1 - pulse_b)),
+				255,
+			)
 
 			if (row + col) % 2 == 0 {
 				r.draw_triangle({x1, top_left}, {x2, top_right}, {x2, bottom_right}, color_a)
@@ -165,4 +165,3 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	mem.tracking_allocator_clear(allocator)
 	return err
 }
-
