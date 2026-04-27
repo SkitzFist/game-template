@@ -73,6 +73,23 @@ tick :: proc(dt: f32) {
 	// run render systems
 	r.draw_begin()
 
+	triangle_pulse_test()
+
+	// r.draw_triangle(
+	// 	{0, window_height},
+	// 	{window_width / 2, 0},
+	// 	{window_width, window_height},
+	// 	r.BLUE,
+	// )
+
+	r.draw_end()
+	window.swap_buffer()
+
+	// reset input
+	input.post_frame()
+}
+
+triangle_pulse_test :: proc() {
 	window_width := f32(window.width)
 	window_height := f32(window.height)
 	time := window.get_time()
@@ -126,19 +143,6 @@ tick :: proc(dt: f32) {
 			}
 		}
 	}
-
-	// r.draw_triangle(
-	// 	{0, window_height},
-	// 	{window_width / 2, 0},
-	// 	{window_width, window_height},
-	// 	r.BLUE,
-	// )
-
-	r.draw_end()
-	window.swap_buffer()
-
-	// reset input
-	input.post_frame()
 }
 
 shutdown :: proc() {
@@ -165,3 +169,4 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	mem.tracking_allocator_clear(allocator)
 	return err
 }
+
