@@ -60,11 +60,18 @@ init :: proc() -> runtime.Context {
 	return context
 }
 
+motion: bool
+frame: int
 tick :: proc(dt: f32) {
 	fmt.println("Fps:", 1 / dt)
+	frame += 1
 	// run input systems
 	if input.is_pressed(input.Key.ESCAPE) {
 		window.set_close(true)
+	}
+
+	if input.is_pressed(input.Key.SPACE) {
+		motion = !motion
 	}
 
 	// run update systems
@@ -73,13 +80,23 @@ tick :: proc(dt: f32) {
 	// run render systems
 	r.draw_begin()
 
-	triangle_pulse_test()
+	// triangle_pulse_test()
 
+	// if motion {
+	// 	rectangle_checker_test_motion()
+	// } else {
+	// 	rectangle_checker_test()
+	// }
+	//
+	rectangle_checker_color_test()
+
+	// width, height := f32(window.width), f32(window.height)
+	// r.draw_rectangle({width / 2, height / 2}, {width / 4, height / 4}, r.BLUE)
 	// r.draw_triangle(
-	// 	{0, window_height},
-	// 	{window_width / 2, 0},
-	// 	{window_width, window_height},
-	// 	r.BLUE,
+	// 	{1, height - 1},
+	// 	{width / 2, 1},
+	// 	{width - 1, height - 1},
+	// 	{255, 0, 0, r.channel_u8(f32(math.sin(window.get_time())))},
 	// )
 
 	r.draw_end()
@@ -87,6 +104,84 @@ tick :: proc(dt: f32) {
 
 	// reset input
 	input.post_frame()
+}
+
+rectangle_checker_test :: proc() {
+	window_width := f32(window.width)
+	window_height := f32(window.height)
+	cell_size: f32 = 1.5
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
+
+	for row in 0 ..< rows {
+		for col in 0 ..< cols {
+			color := (row + col) % 2 == 0 ? r.BLUE : r.GREEN
+
+			r.draw_rectangle(
+				{f32(col) * cell_size, f32(row) * cell_size},
+				{cell_size, cell_size},
+				color,
+			)
+		}
+	}
+}
+
+rectangle_checker_color_test :: proc() {
+	window_width := f32(window.width)
+	window_height := f32(window.height)
+	cell_size: f32 = 2.0
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
+
+	for row in 0 ..< rows {
+		for col in 0 ..< cols {
+			color := (row + col) % 2 == 0 ? r.BLUE : r.GREEN
+
+			color.r = u8(frame % 255)
+
+			r.draw_rectangle(
+				{f32(col) * cell_size, f32(row) * cell_size},
+				{cell_size, cell_size},
+				color,
+			)
+		}
+	}
+}
+
+rectangle_checker_test_motion :: proc() {
+	window_width := f32(window.width)
+	window_height := f32(window.height)
+	time := window.get_time()
+	cell_size: f32 = 3.5
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
+
+	for row in 0 ..< rows {
+		for col in 0 ..< cols {
+			pulse := f32(0.5 + 0.5 * math.sin(time * 2.10 + f64(col) * 0.55 + f64(row) * 0.85))
+
+			color_a := r.rgba8(
+				r.channel_u8(0.10 + 0.25 * pulse),
+				r.channel_u8(0.20 + 0.20 * (1 - pulse)),
+				r.channel_u8(0.70 + 0.25 * pulse),
+				255,
+			)
+			color_b := r.rgba8(
+				r.channel_u8(0.10 + 0.20 * (1 - pulse)),
+				r.channel_u8(0.45 + 0.45 * pulse),
+				r.channel_u8(0.15 + 0.20 * (1 - pulse)),
+				255,
+			)
+
+			color := (row + col) % 2 == 0 ? color_a : color_b
+
+			r.draw_rectangle(
+				{f32(col) * cell_size, f32(row) * cell_size},
+				{cell_size, cell_size},
+				color,
+			)
+		}
+	}
 }
 
 triangle_pulse_test :: proc() {

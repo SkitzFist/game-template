@@ -40,7 +40,7 @@ init :: proc() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	init_primitives()
+	primitives_init()
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
@@ -50,22 +50,24 @@ on_frame_buffer_size_changed :: proc(width, height: i32) {
 }
 
 shutdown :: proc() {
-	delete(triangles.vertexes)
-	gl.DeleteVertexArrays(1, &triangles.vao)
-	gl.DeleteBuffers(1, &triangles.vbo)
-	gl.DeleteProgram(primitive_solid_shader)
+	primitices_shutdown()
 }
 
 // --- FRAME --- //
 draw_begin :: proc() {
-	triangles.count = 0
-	triangles.is_dirty = false
-	triangles.last_drawn = 0
+	primitives.count = 0
+	primitives.is_dirty = false
+	primitives.last_drawn = 0
+
+	// rectangles.count = 0
+	// rectangles.index_count = 0
+	// rectangles.is_dirty = false
+	// rectangles.last_drawn = 0
+	// clear(&rectangles.indices)
 }
 
 draw_end :: proc() {
-	//upload data
-	// data_to_gpu()
+	data_to_gpu()
 }
 
 
@@ -74,3 +76,4 @@ clear_screen :: proc(r, g, b, a: f32) {
 	gl.ClearColor(r, g, b, a)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
+
