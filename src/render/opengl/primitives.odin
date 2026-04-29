@@ -4,11 +4,13 @@ import gl "vendor:OpenGL"
 
 import "core:log"
 
+@(private = "file")
 Vertex :: struct {
 	x, y:  f32,
 	color: u32,
 }
 
+@(private = "file")
 Array_Data :: struct {
 	vertexes:        [dynamic]Vertex,
 	vbo, vao, count: u32,
@@ -16,6 +18,7 @@ Array_Data :: struct {
 	is_dirty:        bool,
 }
 
+@(private = "file")
 VERTEX_STRIDE_BYTES :: size_of(Vertex)
 
 basic_vert := #load("../../shaders/basic.vert")
@@ -34,7 +37,7 @@ primitives_init :: proc() {
 	init_array_data(&primitives)
 }
 
-primitices_shutdown :: proc() {
+primitives_shutdown :: proc() {
 	delete(primitives.vertexes)
 	gl.DeleteVertexArrays(1, &primitives.vao)
 	gl.DeleteBuffers(1, &primitives.vbo)
@@ -42,6 +45,7 @@ primitices_shutdown :: proc() {
 	gl.DeleteProgram(primitive_solid_shader)
 }
 
+@(private = "file")
 init_array_data :: proc(data: ^Array_Data) {
 	data.vertexes = make([dynamic]Vertex, 0, INIT_CAP)
 	data.vbo = 0
@@ -70,7 +74,7 @@ pack_color :: proc(color: [4]u8) -> u32 {
 	return u32(color[0]) | u32(color[1]) << 8 | u32(color[2]) << 16 | u32(color[3]) << 24
 }
 
-@(private)
+@(private = "file")
 append_vertex :: proc(
 	vertexes: ^[dynamic]Vertex,
 	count: ^u32,
@@ -228,7 +232,8 @@ draw_primitives :: proc(count: i32) {
 }
 
 
-data_to_gpu :: proc() {
+// todo refactor this
+primitives_data_to_gpu :: proc() {
 	if primitives.is_dirty {
 		log.info("[OPENGL] primitives dirty. uploading to gpu")
 		gl.BindBuffer(gl.ARRAY_BUFFER, primitives.vbo)

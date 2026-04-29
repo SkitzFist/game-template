@@ -88,10 +88,23 @@ tick :: proc(dt: f32) {
 	// 	rectangle_checker_test()
 	// }
 	//
-	rectangle_checker_color_test()
+	// rectangle_checker_color_test()
 
-	// width, height := f32(window.width), f32(window.height)
-	// r.draw_rectangle({width / 2, height / 2}, {width / 4, height / 4}, r.BLUE)
+	width, height := f32(window.width), f32(window.height)
+
+	// r.draw_rectangle(
+	// 	{width / 2 - width / 8, height / 2 - height / 8},
+	// 	{width / 4, height / 4},
+	// 	r.BLUE,
+	// )
+
+	rectangle_rounded_checker_test()
+	// r.draw_rectangle_rounded(
+	// 	{width / 2 - width / 8, height / 2 - height / 8},
+	// 	{width / 4, height / 4},
+	// 	0.5,
+	// 	r.BLUE,
+	// )
 	// r.draw_triangle(
 	// 	{1, height - 1},
 	// 	{width / 2, 1},
@@ -120,6 +133,32 @@ rectangle_checker_test :: proc() {
 			r.draw_rectangle(
 				{f32(col) * cell_size, f32(row) * cell_size},
 				{cell_size, cell_size},
+				color,
+			)
+		}
+	}
+}
+
+rectangle_rounded_checker_test :: proc() {
+	window_width := f32(window.width)
+	window_height := f32(window.height)
+
+	t := window.get_time()
+	pulse := f32((math.sin(t) + 1.0) * 0.5)
+
+	cell_size: f32 = 32 + 10 * (pulse * pulse)
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
+	roundness := (math.sin(t * 2.0 * math.PI / 10) + 1.0) * 0.5
+
+	for row in 0 ..< rows {
+		for col in 0 ..< cols {
+			color := (row + col) % 2 == 0 ? r.BLUE : r.GREEN
+
+			r.draw_rectangle_rounded(
+				{f32(col) * cell_size, f32(row) * cell_size},
+				{cell_size, cell_size},
+				f32(roundness),
 				color,
 			)
 		}

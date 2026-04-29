@@ -41,6 +41,7 @@ init :: proc() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	primitives_init()
+	primitives_rounded_init()
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
@@ -50,7 +51,8 @@ on_frame_buffer_size_changed :: proc(width, height: i32) {
 }
 
 shutdown :: proc() {
-	primitices_shutdown()
+	primitives_shutdown()
+	primitives_rounded_shutdown()
 }
 
 // --- FRAME --- //
@@ -59,15 +61,14 @@ draw_begin :: proc() {
 	primitives.is_dirty = false
 	primitives.last_drawn = 0
 
-	// rectangles.count = 0
-	// rectangles.index_count = 0
-	// rectangles.is_dirty = false
-	// rectangles.last_drawn = 0
-	// clear(&rectangles.indices)
+	primitives_rounded.count = 0
+	primitives_rounded.is_dirty = false
+	primitives_rounded.last_drawn = 0
 }
 
 draw_end :: proc() {
-	data_to_gpu()
+	primitives_data_to_gpu()
+	primitives_rounded_data_to_gpu()
 }
 
 
