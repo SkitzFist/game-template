@@ -48,10 +48,9 @@ draw_begin :: proc() {
 
 draw_end :: proc() {
 	when BACKEND == .OPENGL {
-		gl.data_to_gpu()
-
-		draw_command_buffer()
+		gl.draw_end()
 	}
+	draw_command_buffer()
 }
 
 clear_screen :: proc(color: Color) {
@@ -64,3 +63,4 @@ clear_screen :: proc(color: Color) {
 		)
 	}
 }
+
