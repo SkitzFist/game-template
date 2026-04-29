@@ -146,6 +146,60 @@ add_rectangle_rounded :: proc {
 	add_rectangle_rounded_clip_space,
 }
 
+
+add_circle_screen_space :: proc(pos: [2]f32, radius: f32, color: [4]u8) {
+	x, y := to_clip_space(pos.x, pos.y)
+	add_circle_clip_space(x, y, radius, color)
+}
+
+add_circle_clip_space :: proc(x, y, radius: f32, color: [4]u8) {
+
+	// clip_space
+	width, height :=
+		((radius * 2) / f32(render_width) * 2), ((radius * 2) / f32(render_height)) * 2
+	// world space
+	half_w, half_h := radius, radius
+	// x, y := x + radius, y + radius
+	color := pack_color(color)
+
+	x, y := x - (width / 2), y + (height / 2)
+
+	// *---+ 0
+	// |---|
+	// +---+
+	append_vertex(&primitives_rounded, Vertex{x, y, color, {-half_w, half_h}, 1.0})
+
+	// +---* 1
+	// |---|
+	// +---+
+	append_vertex(&primitives_rounded, Vertex{x + width, y, color, {half_w, half_h}, 1.0})
+
+	// +---+ 2
+	// |---|
+	// *---+
+	append_vertex(&primitives_rounded, Vertex{x, y - height, color, {-half_w, -half_h}, 1.0})
+	append_vertex(&primitives_rounded, Vertex{x, y - height, color, {-half_w, -half_h}, 1.0})
+
+
+	// +---* 1
+	// |---|
+	// +---+
+	append_vertex(&primitives_rounded, Vertex{x + width, y, color, {half_w, half_h}, 1.0})
+
+	// +---+ 3
+	// |---|
+	// +---*
+	append_vertex(
+		&primitives_rounded,
+		Vertex{x + width, y - height, color, {half_w, -half_h}, 1.0},
+	)
+}
+
+add_circle :: proc {
+	add_circle_screen_space,
+	add_circle_clip_space,
+}
+
 draw_primitives_rounded :: proc(count: i32) {
 	gl.UseProgram(primitives_rounded_shader)
 	gl.BindBuffer(gl.ARRAY_BUFFER, primitives_rounded.vbo)

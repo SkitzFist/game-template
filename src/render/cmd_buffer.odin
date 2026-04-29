@@ -79,3 +79,11 @@ draw_rectangle_rounded :: proc(pos, size: [2]f32, radius: f32, color: Color) {
 	}
 }
 
+draw_circle :: proc(pos: [2]f32, radius: f32, color: Color) {
+	add_draw_command(.PRIMITIVE_ROUNDED, 2)
+
+	when BACKEND == .OPENGL {
+		gl.add_circle(pos, radius, color)
+	}
+}
+
