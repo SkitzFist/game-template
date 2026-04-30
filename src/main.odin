@@ -1,5 +1,4 @@
 package game
-
 import "base:runtime"
 import "core:log"
 import "core:mem"
@@ -80,8 +79,6 @@ tick :: proc(dt: f32) {
 	// run render systems
 	r.draw_begin()
 
-	// triangle_pulse_test()
-
 	// if motion {
 	// 	rectangle_checker_test_motion()
 	// } else {
@@ -90,7 +87,11 @@ tick :: proc(dt: f32) {
 
 	// rectangle_checker_color_test()
 
-	// width, height := f32(window.width), f32(window.height)
+	offset: f32 = 100
+	width, height := f32(window.width) - offset, f32(window.height) - offset
+
+
+	r.draw_triangle({offset, height}, {width / 2, offset}, {width, height}, r.RED)
 
 	// r.draw_rectangle(
 	// 	{width / 2 - width / 8, height / 2 - height / 8},
@@ -98,20 +99,22 @@ tick :: proc(dt: f32) {
 	// 	r.BLUE,
 	// )
 
-	// rectangle_rounded_checker_test()
-	x: f32 = 0.0
-	y: f32 = 0.0
-	width: f32 = 100.0
-	height: f32 = 100.0
-	r.draw_rectangle_rounded({x, y}, {width, height}, 0, r.BLUE)
+	// // rectangle_rounded_checker_test()
+	// x: f32 = 0.0
+	// y: f32 = 0.0
+	// width: f32 = 100.0
+	// height: f32 = 100.0
 
-	r.draw_circle({width / 2, height / 2}, width / 2, {255, 0, 0, 155})
+	// r.draw_triangle({0, height}, {width, height}, {0, height + height}, r.GREEN)
+	// r.draw_rectangle_rounded({x, y}, {width, height}, 0, r.BLUE)
 
-	// r.draw_triangle(
+	// r.draw_circle({width / 2, height / 2}, width / 2, {255, 0, 0, 155})
+
+	// r.draw_triangle_rounded(
 	// 	{1, height - 1},
 	// 	{width / 2, 1},
 	// 	{width - 1, height - 1},
-	// 	{255, 0, 0, r.channel_u8(f32(math.sin(window.get_time())))},
+	// 	{255, 0, 0, 255},
 	// )
 
 	r.draw_end()
@@ -226,11 +229,10 @@ rectangle_checker_test_motion :: proc() {
 	}
 }
 
-triangle_pulse_test :: proc() {
+triangle_pulse_test :: proc(cell_size: f32) {
 	window_width := f32(window.width)
 	window_height := f32(window.height)
 	time := window.get_time()
-	cell_size: f32 = 5
 	amplitude := cell_size * 0.35
 	cols := i32(window_width / cell_size) + 2
 	rows := i32(window_height / cell_size) + 2

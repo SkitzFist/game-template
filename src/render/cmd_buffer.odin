@@ -2,8 +2,6 @@ package render
 
 import gl "opengl"
 
-import "core:log"
-
 /*
 
 	| Draw_Command | Draw_Style | Shader | vbo ? | vba ? 
@@ -13,7 +11,6 @@ import "core:log"
 
 Draw_Command :: enum {
 	PRIMITIVE,
-	PRIMITIVE_ROUNDED,
 }
 
 draw_commands: [dynamic]Draw_Command
@@ -28,10 +25,6 @@ draw_command_buffer :: proc() {
 		case .PRIMITIVE:
 			when BACKEND == .OPENGL {
 				gl.draw_primitives(draw_count[i])
-			}
-		case .PRIMITIVE_ROUNDED:
-			when BACKEND == .OPENGL {
-				gl.draw_primitives_rounded(draw_count[i])
 			}
 		}
 	}
@@ -72,7 +65,7 @@ draw_rectangle :: proc(pos, size: [2]f32, color: Color) {
 }
 
 draw_rectangle_rounded :: proc(pos, size: [2]f32, radius: f32, color: Color) {
-	add_draw_command(.PRIMITIVE_ROUNDED, 2)
+	add_draw_command(.PRIMITIVE, 2)
 
 	when BACKEND == .OPENGL {
 		gl.add_rectangle_rounded(pos, size, radius, color)
@@ -80,7 +73,7 @@ draw_rectangle_rounded :: proc(pos, size: [2]f32, radius: f32, color: Color) {
 }
 
 draw_circle :: proc(pos: [2]f32, radius: f32, color: Color) {
-	add_draw_command(.PRIMITIVE_ROUNDED, 2)
+	add_draw_command(.PRIMITIVE, 2)
 
 	when BACKEND == .OPENGL {
 		gl.add_circle(pos, radius, color)
