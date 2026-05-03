@@ -87,11 +87,23 @@ tick :: proc(dt: f32) {
 
 	// rectangle_checker_color_test()
 
-	offset: f32 = 100
-	width, height := f32(window.width) - offset, f32(window.height) - offset
+	// offset: f32 = 100
+	// width, height := f32(window.width) - offset, f32(window.height) - offset
 
 
-	r.draw_triangle({offset, height}, {width / 2, offset}, {width, height}, r.RED)
+	// r.draw_triangle({offset, height}, {width / 2, offset}, {width, height}, r.RED)
+
+	width, height := f32(window.width), f32(window.height)
+
+	l_width := (0.5 * math.sin(window.get_time()) + 0.5) * 20
+	r.draw_line(
+		{width / 4, height / 2},
+		{width / 2, height / 2},
+		f32(l_width),
+		r.GOLD,
+		roundness = 0.5,
+	)
+
 
 	// r.draw_rectangle(
 	// 	{width / 2 - width / 8, height / 2 - height / 8},
