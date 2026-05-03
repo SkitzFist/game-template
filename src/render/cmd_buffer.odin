@@ -80,3 +80,11 @@ draw_circle :: proc(pos: [2]f32, radius: f32, color: Color) {
 	}
 }
 
+draw_line :: proc(p1, p2: [2]f32, thickness: f32, color: Color, roundness: f32 = 0.0) {
+	add_draw_command(.PRIMITIVE, 2)
+
+	when BACKEND == .OPENGL {
+		gl.add_line(p1, p2, thickness, color, roundness)
+	}
+}
+

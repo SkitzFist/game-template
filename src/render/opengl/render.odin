@@ -1,7 +1,6 @@
 package opengl
 
 import "core:log"
-import "core:terminal"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 

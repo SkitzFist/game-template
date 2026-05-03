@@ -2,6 +2,8 @@ package opengl
 
 import gl "vendor:OpenGL"
 
+import "core:math"
+
 import "core:log"
 
 @(private = "file")
@@ -20,6 +22,7 @@ Array_Data :: struct {
 	is_dirty:        bool,
 }
 
+@(private = "file")
 VERTEX_STRIDE_BYTES :: size_of(Vertex)
 
 primitives_vert := #load("../../shaders/primitives.vert")
@@ -88,6 +91,7 @@ to_clip_space :: proc(x, y: f32) -> (f32, f32) {
 	return clip_x, clip_y
 }
 
+@(private = "file")
 append_vertex :: proc(data: ^Array_Data, vertex: Vertex) {
 
 	if int(data.count) >= len(data.vertexes) {
@@ -111,14 +115,13 @@ append_vertex :: proc(data: ^Array_Data, vertex: Vertex) {
 	data.count += 1
 }
 
-
 add_rectangle_screen_space :: proc(pos, size: [2]f32, color: [4]u8) {
 	x, y := to_clip_space(pos.x, pos.y)
-	add_rectangle_vertexes(x, y, size, 0, NONE_HALF, pack_color(color))
+	append_rectangle_vertexes(x, y, size, 0, NONE_HALF, pack_color(color))
 }
 
 add_rectangle_clip_space :: proc(x, y, width, height: f32, color: [4]u8) {
-	add_rectangle_vertexes(x, y, {width, height}, 0, NONE_HALF, pack_color(color))
+	append_rectangle_vertexes(x, y, {width, height}, 0, NONE_HALF, pack_color(color))
 }
 
 add_rectangle :: proc {
@@ -135,7 +138,7 @@ add_rectangle_rounded_clip_space :: proc(x, y: f32, size: [2]f32, radius: f32, c
 
 	// world space
 	half_w, half_h := size.x / 2, size.y / 2
-	add_rectangle_vertexes(x, y, size, radius, {half_w, half_h}, pack_color(color))
+	append_rectangle_vertexes(x, y, size, radius, {half_w, half_h}, pack_color(color))
 }
 
 add_rectangle_rounded :: proc {
@@ -144,7 +147,7 @@ add_rectangle_rounded :: proc {
 }
 
 @(private = "file")
-add_rectangle_vertexes :: #force_inline proc(
+append_rectangle_vertexes :: #force_inline proc(
 	x, y: f32,
 	size: [2]f32,
 	radius: f32,
@@ -254,6 +257,53 @@ add_triangle :: proc {
 	add_triangle_clip_space,
 }
 
+add_line_screen_space :: proc(p1, p2: [2]f32, thickness: f32, color: [4]u8, roundness: f32 = 0) {
+	x1, y1 := to_clip_space(p1.x, p1.y)
+	x2, y2 := to_clip_space(p2.x, p2.y)
+	add_line_clip_space(x1, y1, x2, y2, thickness, color, roundness)
+}
+
+
+add_line_clip_space :: proc(x1, y1, x2, y2, thickness: f32, color: [4]u8, roundness: f32 = 0) {
+	color := pack_color(color)
+
+	p1_base: [2]f32 = {(x1 + 1.0) * 0.5 * f32(render_width), (1.0 - y1) * 0.5 * f32(render_height)}
+	p2_base: [2]f32 = {(x2 + 1.0) * 0.5 * f32(render_width), (1.0 - y2) * 0.5 * f32(render_height)}
+
+	dx, dy := p2_base.x - p1_base.x, p2_base.y - p1_base.y
+	d := math.sqrt((dx * dx) + (dy * dy))
+	dx /= d
+	dy /= d
+
+	n: [2]f32 = {-dy, dx}
+
+	half_length := d / 2
+	half_thickness := thickness / 2
+
+	p1 := p1_base + n * half_thickness
+	x1a, y1a := to_clip_space(p1.x, p1.y)
+	append_vertex(&primitives, Vertex{x1a, y1a, color, {-half_length, half_thickness}, roundness})
+
+	p2 := p1_base - n * half_thickness
+	x1b, y1b := to_clip_space(p2.x, p2.y)
+	append_vertex(&primitives, Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
+
+	p3 := p2_base + n * half_thickness
+	x2a, y2a := to_clip_space(p3.x, p3.y)
+	append_vertex(&primitives, Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
+
+	p4 := p2_base - n * half_thickness
+	x2b, y2b := to_clip_space(p4.x, p4.y)
+	append_vertex(&primitives, Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
+	append_vertex(&primitives, Vertex{x2b, y2b, color, {half_length, -half_thickness}, roundness})
+	append_vertex(&primitives, Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
+}
+
+add_line :: proc {
+	add_line_screen_space,
+	add_line_clip_space,
+}
+
 draw_primitives :: proc(count: i32) {
 	gl.UseProgram(primitives_shader)
 	gl.BindBuffer(gl.ARRAY_BUFFER, primitives.vbo)
@@ -265,6 +315,7 @@ draw_primitives :: proc(count: i32) {
 	primitives.last_drawn += vertex_count
 }
 
+@(private)
 primitives_data_to_gpu :: proc() {
 	if primitives.is_dirty {
 		log.info("[OPENGL] primitives dirty, uploading to gpu")
