@@ -102,6 +102,8 @@ tick :: proc(dt: f32) {
 
 	r.draw_line({x, y + size * 1.1}, {x + size, y + size * 1.1}, 25.0, r.GOLD, 0.8)
 
+	length := f32(0.5 * math.sin(window.get_time()) + 0.5) * size
+	r.draw_line({x, y + size * 1.5}, {1.0, 0.0}, length, 25.0, r.BLUE, 0.8)
 
 	// rectangle_rounded_checker_test()
 
