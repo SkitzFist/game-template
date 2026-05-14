@@ -20,9 +20,11 @@ main :: proc() {
 
 	input.init()
 
-	window.create_fullscreen(PROJECT_NAME)
+	window.create_fullscreen(PROJECT_NAME, r.context_config())
 	defer (window.destroy())
 
+	r.attach_context(window.width, window.height, window.gl_set_proc_address)
+	window.set_framebuffer_resize_callback(r.on_frame_buffer_size_changed)
 	r.init()
 
 	prev, curr: f64 = window.get_time(), 0.0
@@ -298,4 +300,3 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	mem.tracking_allocator_clear(allocator)
 	return err
 }
-

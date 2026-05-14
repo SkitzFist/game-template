@@ -1,19 +1,18 @@
 package render
 
+import "../gfx_context"
 import gl "opengl"
 
-import "vendor:glfw"
-
 // ---- WINDOW ---- //
-pre_window_create :: proc() {
+context_config :: proc() -> gfx_context.Config {
 	when BACKEND == .OPENGL {
-		gl.pre_window_create()
+		return gl.context_config()
 	}
 }
 
-attach_to_window :: proc(window_handle: glfw.WindowHandle) {
+attach_context :: proc(width, height: i32, set_proc_address: gfx_context.Set_Proc_Address) {
 	when BACKEND == .OPENGL {
-		gl.attach_to_window(window_handle)
+		gl.attach_context(width, height, set_proc_address)
 	}
 }
 
@@ -63,4 +62,3 @@ clear_screen :: proc(color: Color) {
 		)
 	}
 }
-

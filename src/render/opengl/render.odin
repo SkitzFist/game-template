@@ -1,8 +1,8 @@
 package opengl
 
+import "../../gfx_context"
 import "core:log"
 import gl "vendor:OpenGL"
-import "vendor:glfw"
 
 @(private)
 TAG :: "[OPENGL]"
@@ -17,17 +17,21 @@ render_width, render_height: i32
 TIME: f32
 
 // ---- WINDOW ---- //
-pre_window_create :: proc() {
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
-	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+context_config :: proc() -> gfx_context.Config {
+	return {
+		api = .OPENGL,
+		major_version = GL_MAJOR_VERSION,
+		minor_version = GL_MINOR_VERSION,
+		profile = .CORE,
+		samples = 8,
+	}
 }
 
-attach_to_window :: proc(window_handle: glfw.WindowHandle) {
-	glfw.MakeContextCurrent(window_handle)
-	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
+attach_context :: proc(width, height: i32, set_proc_address: gfx_context.Set_Proc_Address) {
+	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, set_proc_address)
 
-	render_width, render_height = glfw.GetFramebufferSize(window_handle)
+	render_width = width
+	render_height = height
 
 	gl.Viewport(0, 0, render_width, render_height)
 
@@ -73,4 +77,3 @@ clear_screen :: proc(r, g, b, a: f32) {
 	gl.ClearColor(r, g, b, a)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
-
