@@ -4,8 +4,8 @@ import "base:runtime"
 import "core:log"
 import "vendor:glfw"
 
+import "../gfx_context"
 import "../input"
-import "../render"
 
 //debug
 import "core:fmt"
@@ -18,7 +18,12 @@ DEFAULT_CONTEXT: runtime.Context
 
 width, height: i32
 
-create_fullscreen :: proc(title: cstring) -> (success: bool) {
+Framebuffer_Resize_Callback :: #type proc(width, height: i32)
+
+@(private)
+framebuffer_resize_callback: Framebuffer_Resize_Callback
+
+create_fullscreen :: proc(title: cstring, config: gfx_context.Config) -> (success: bool) {
 	//store odin context so we can use it in proc "c" functions
 	DEFAULT_CONTEXT = context
 
@@ -29,7 +34,7 @@ create_fullscreen :: proc(title: cstring) -> (success: bool) {
 		return false
 	}
 
-	render.pre_window_create()
+	apply_context_config(config)
 
 	monitor := glfw.GetPrimaryMonitor()
 	mode := glfw.GetVideoMode(monitor)
@@ -37,7 +42,6 @@ create_fullscreen :: proc(title: cstring) -> (success: bool) {
 	glfw.WindowHint(glfw.GREEN_BITS, mode.green_bits)
 	glfw.WindowHint(glfw.BLUE_BITS, mode.blue_bits)
 	glfw.WindowHint(glfw.REFRESH_RATE, mode.refresh_rate)
-	glfw.WindowHint(glfw.SAMPLES, 8)
 
 	window_handle = glfw.CreateWindow(mode.width, mode.height, title, monitor, nil)
 	if window_handle == nil {
@@ -45,7 +49,7 @@ create_fullscreen :: proc(title: cstring) -> (success: bool) {
 		return false
 	}
 
-	render.attach_to_window(window_handle)
+	glfw.MakeContextCurrent(window_handle)
 	glfw.SwapInterval(1)
 
 	glfw.SetKeyCallback(window_handle, key_callback)
@@ -60,6 +64,14 @@ create_fullscreen :: proc(title: cstring) -> (success: bool) {
 	log.info("[WINDOW] created")
 
 	return true
+}
+
+set_framebuffer_resize_callback :: proc(callback: Framebuffer_Resize_Callback) {
+	framebuffer_resize_callback = callback
+}
+
+gl_set_proc_address :: proc(p: rawptr, name: cstring) {
+	glfw.gl_set_proc_address(p, name)
 }
 
 set_title :: proc(title: cstring) {
@@ -94,6 +106,23 @@ swap_buffer :: proc() {
 
 get_size :: proc() -> (width, height: i32) {
 	return glfw.GetWindowSize(window_handle)
+}
+
+@(private)
+apply_context_config :: proc(config: gfx_context.Config) {
+	switch config.api {
+	case .OPENGL:
+		glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, config.major_version)
+		glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, config.minor_version)
+
+		if config.profile == .CORE {
+			glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+		}
+	}
+
+	if config.samples > 0 {
+		glfw.WindowHint(glfw.SAMPLES, config.samples)
+	}
 }
 
 print_frame_size :: proc() {
@@ -186,6 +215,7 @@ frame_buffer_size_callback: glfw.FramebufferSizeProc : proc "c" (
 
 	log.info("frame buffer size changed:", width, ",", height)
 	width, height = w, h
-	render.on_frame_buffer_size_changed(width, height)
+	if framebuffer_resize_callback != nil {
+		framebuffer_resize_callback(width, height)
+	}
 }
-
