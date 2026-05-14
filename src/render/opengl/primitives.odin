@@ -153,40 +153,64 @@ add_triangle :: proc(p1, p2, p3: [2]f32, color: [4]u8) {
 	append_vertex(Vertex{x3, y3, color, NONE_HALF, 0})
 }
 
-add_line :: proc(p1, p2: [2]f32, thickness: f32, color: [4]u8, roundness: f32 = 0) {
+add_line_points :: proc(p1, p2: [2]f32, thickness: f32, color: [4]u8, roundness: f32 = 0) {
 	color := pack_color(color)
 
 	dx, dy := p2.x - p1.x, p2.y - p1.y
 	d := math.sqrt((dx * dx) + (dy * dy))
-	if d == 0 {
-		panic("Line length is 0")
-	}
-
-	dx /= d
-	dy /= d
-
-	n: [2]f32 = {-dy, dx}
 
 	half_length := d / 2
 	half_thickness := thickness / 2
 
-	p1a := p1 + n * half_thickness
-	x1a, y1a := to_clip_space(p1a.x, p1a.y)
+	x1, y1 := to_clip_space(p1.x, p1.y)
+	x2, y2 := to_clip_space(p2.x, p2.y)
+
+	offset_x, offset_y: f32
+	if d != 0 {
+		dx /= d
+		dy /= d
+
+		nx, ny := -dy, dx
+		offset_x = (nx * half_thickness / f32(render_width)) * 2.0
+		offset_y = -(ny * half_thickness / f32(render_height)) * 2.0
+	}
+
+	x1a, y1a := x1 + offset_x, y1 + offset_y
 	append_vertex(Vertex{x1a, y1a, color, {-half_length, half_thickness}, roundness})
 
-	p1b := p1 - n * half_thickness
-	x1b, y1b := to_clip_space(p1b.x, p1b.y)
+	x1b, y1b := x1 - offset_x, y1 - offset_y
 	append_vertex(Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
 
-	p2a := p2 + n * half_thickness
-	x2a, y2a := to_clip_space(p2a.x, p2a.y)
+	x2a, y2a := x2 + offset_x, y2 + offset_y
 	append_vertex(Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
 
-	p2b := p2 - n * half_thickness
-	x2b, y2b := to_clip_space(p2b.x, p2b.y)
+	x2b, y2b := x2 - offset_x, y2 - offset_y
 	append_vertex(Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
 	append_vertex(Vertex{x2b, y2b, color, {half_length, -half_thickness}, roundness})
 	append_vertex(Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
+}
+
+add_line_direction :: proc(
+	point, direction: [2]f32,
+	length, thickness: f32,
+	color: [4]u8,
+	roundness: f32 = 0,
+) {
+	dx, dy := direction.x, direction.y
+	d := math.sqrt((dx * dx) + (dy * dy))
+
+	p2 := point
+	if d != 0 {
+		scale := length / d
+		p2 += direction * scale
+	}
+
+	add_line_points(point, p2, thickness, color, roundness)
+}
+
+add_line :: proc {
+	add_line_points,
+	add_line_direction,
 }
 
 draw_primitives :: proc(count: i32) {
