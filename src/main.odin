@@ -91,11 +91,11 @@ tick :: proc(dt: f32) {
 
 	r.draw_rectangle({20, 20}, {150, 150}, r.CYAN)
 
-	r.draw_rectangle_rounded(
+	r.draw_rectangle(
 		{width / 2 - width / 8, height / 2 - height / 8},
 		{width / 4, height / 4},
-		0.8,
 		r.BLUE,
+		roundness = 0.8,
 	)
 
 	// rectangle_rounded_checker_test()
@@ -144,11 +144,11 @@ rectangle_rounded_checker_test :: proc() {
 		for col in 0 ..< cols {
 			color := (row + col) % 2 == 0 ? r.BLUE : r.GREEN
 
-			r.draw_rectangle_rounded(
+			r.draw_rectangle(
 				{f32(col) * cell_size, f32(row) * cell_size},
 				{cell_size, cell_size},
-				f32(roundness),
 				color,
+				f32(roundness),
 			)
 		}
 	}
