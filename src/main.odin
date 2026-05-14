@@ -89,14 +89,19 @@ tick :: proc(dt: f32) {
 
 	width, height := f32(window.width), f32(window.height)
 
-	r.draw_rectangle({20, 20}, {150, 150}, r.CYAN)
-
-	r.draw_rectangle(
-		{width / 2 - width / 8, height / 2 - height / 8},
-		{width / 4, height / 4},
-		r.BLUE,
-		roundness = 0.8,
+	size: f32 = 500.0
+	x, y := width / 2 - size / 2, height / 2 - size / 2
+	r.draw_rectangle({x, y}, size, r.GREEN)
+	r.draw_circle({x + size / 2, y + size / 2}, size / 2, r.RED)
+	r.draw_triangle(
+		{x, y + size},
+		{x + size / 2, y},
+		{x + size, y + size},
+		r.BLUE - {0, 0, 0, 100},
 	)
+
+	r.draw_line({x, y + size * 1.1}, {x + size, y + size * 1.1}, 25.0, r.GOLD, 0.8)
+
 
 	// rectangle_rounded_checker_test()
 

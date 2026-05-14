@@ -102,22 +102,15 @@ add_rectangle :: proc(pos, size: [2]f32, color: [4]u8, roundness: f32 = 0.0) {
 	append_vertex(Vertex{x + width, y - height, color, {half_w, -half_h}, roundness})
 }
 
-add_circle_screen_space :: proc(pos: [2]f32, roundness: f32, color: [4]u8) {
-	x, y := to_clip_space(pos.x, pos.y)
-	add_circle_clip_space(x, y, roundness, color)
-}
-
-add_circle_clip_space :: proc(x, y, roundness: f32, color: [4]u8) {
-
-	// clip_space
-	width, height :=
-		((roundness * 2) / f32(render_width) * 2), ((roundness * 2) / f32(render_height)) * 2
-	// world space
-	half_w, half_h := roundness, roundness
-	// x, y := x + roundness, y + roundness
+add_circle :: proc(pos: [2]f32, roundness: f32, color: [4]u8) {
 	color := pack_color(color)
 
-	x, y := x - (width / 2), y + (height / 2)
+	width, height :=
+		((roundness * 2) / f32(render_width) * 2), ((roundness * 2) / f32(render_height)) * 2
+	half_w, half_h := roundness, roundness
+
+	x, y := to_clip_space(pos.x, pos.y)
+	x, y = x - (width / 2), y + (height / 2)
 
 	// *---+ 0
 	// |---|
@@ -147,47 +140,28 @@ add_circle_clip_space :: proc(x, y, roundness: f32, color: [4]u8) {
 	append_vertex(Vertex{x + width, y - height, color, {half_w, -half_h}, 1.0})
 }
 
-add_circle :: proc {
-	add_circle_screen_space,
-	add_circle_clip_space,
-}
-
-add_triangle_world_space :: proc(p1, p2, p3: [2]f32, color: [4]u8) {
-	x1, y1 := to_clip_space(p1.x, p1.y)
-	x2, y2 := to_clip_space(p2.x, p2.y)
-	x3, y3 := to_clip_space(p3.x, p3.y)
-
-	add_triangle_clip_space(x1, y1, x2, y2, x3, y3, color)
-}
-
-add_triangle_clip_space :: proc(x1, y1, x2, y2, x3, y3: f32, color: [4]u8) {
+add_triangle :: proc(p1, p2, p3: [2]f32, color: [4]u8) {
 	color := pack_color(color)
 
+	x1, y1 := to_clip_space(p1.x, p1.y)
 	append_vertex(Vertex{x1, y1, color, NONE_HALF, 0})
+
+	x2, y2 := to_clip_space(p2.x, p2.y)
 	append_vertex(Vertex{x2, y2, color, NONE_HALF, 0})
+
+	x3, y3 := to_clip_space(p3.x, p3.y)
 	append_vertex(Vertex{x3, y3, color, NONE_HALF, 0})
 }
 
-add_triangle :: proc {
-	add_triangle_world_space,
-	add_triangle_clip_space,
-}
-
-add_line_screen_space :: proc(p1, p2: [2]f32, thickness: f32, color: [4]u8, roundness: f32 = 0) {
-	x1, y1 := to_clip_space(p1.x, p1.y)
-	x2, y2 := to_clip_space(p2.x, p2.y)
-	add_line_clip_space(x1, y1, x2, y2, thickness, color, roundness)
-}
-
-
-add_line_clip_space :: proc(x1, y1, x2, y2, thickness: f32, color: [4]u8, roundness: f32 = 0) {
+add_line :: proc(p1, p2: [2]f32, thickness: f32, color: [4]u8, roundness: f32 = 0) {
 	color := pack_color(color)
 
-	p1_base: [2]f32 = {(x1 + 1.0) * 0.5 * f32(render_width), (1.0 - y1) * 0.5 * f32(render_height)}
-	p2_base: [2]f32 = {(x2 + 1.0) * 0.5 * f32(render_width), (1.0 - y2) * 0.5 * f32(render_height)}
-
-	dx, dy := p2_base.x - p1_base.x, p2_base.y - p1_base.y
+	dx, dy := p2.x - p1.x, p2.y - p1.y
 	d := math.sqrt((dx * dx) + (dy * dy))
+	if d == 0 {
+		panic("Line length is 0")
+	}
+
 	dx /= d
 	dy /= d
 
@@ -196,28 +170,23 @@ add_line_clip_space :: proc(x1, y1, x2, y2, thickness: f32, color: [4]u8, roundn
 	half_length := d / 2
 	half_thickness := thickness / 2
 
-	p1 := p1_base + n * half_thickness
-	x1a, y1a := to_clip_space(p1.x, p1.y)
+	p1a := p1 + n * half_thickness
+	x1a, y1a := to_clip_space(p1a.x, p1a.y)
 	append_vertex(Vertex{x1a, y1a, color, {-half_length, half_thickness}, roundness})
 
-	p2 := p1_base - n * half_thickness
-	x1b, y1b := to_clip_space(p2.x, p2.y)
+	p1b := p1 - n * half_thickness
+	x1b, y1b := to_clip_space(p1b.x, p1b.y)
 	append_vertex(Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
 
-	p3 := p2_base + n * half_thickness
-	x2a, y2a := to_clip_space(p3.x, p3.y)
+	p2a := p2 + n * half_thickness
+	x2a, y2a := to_clip_space(p2a.x, p2a.y)
 	append_vertex(Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
 
-	p4 := p2_base - n * half_thickness
-	x2b, y2b := to_clip_space(p4.x, p4.y)
+	p2b := p2 - n * half_thickness
+	x2b, y2b := to_clip_space(p2b.x, p2b.y)
 	append_vertex(Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
 	append_vertex(Vertex{x2b, y2b, color, {half_length, -half_thickness}, roundness})
 	append_vertex(Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
-}
-
-add_line :: proc {
-	add_line_screen_space,
-	add_line_clip_space,
 }
 
 draw_primitives :: proc(count: i32) {
