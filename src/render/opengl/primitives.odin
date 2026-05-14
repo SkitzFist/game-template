@@ -19,13 +19,11 @@ NONE_HALF: [2]f32 : {0, 0}
 
 primitives_init :: proc() {
 	primitives_shader = create_shader_u8(primitives_vert, primitives_frag)
-
 	init_array_data(&primitives)
 }
 
 primitives_shutdown :: proc() {
 	gl.DeleteVertexArrays(1, &primitives.vao)
-
 	gl.DeleteProgram(primitives_shader)
 }
 
@@ -66,45 +64,12 @@ to_clip_space :: proc(x, y: f32) -> (f32, f32) {
 	return clip_x, clip_y
 }
 
-add_rectangle_screen_space :: proc(pos, size: [2]f32, color: [4]u8) {
+add_rectangle :: proc(pos, size: [2]f32, color: [4]u8, roundness: f32 = 0.0) {
+	color := pack_color(color)
 	x, y := to_clip_space(pos.x, pos.y)
-	append_rectangle_vertexes(x, y, size, 0, NONE_HALF, pack_color(color))
-}
-
-add_rectangle_clip_space :: proc(x, y, width, height: f32, color: [4]u8) {
-	append_rectangle_vertexes(x, y, {width, height}, 0, NONE_HALF, pack_color(color))
-}
-
-add_rectangle :: proc {
-	add_rectangle_screen_space,
-	add_rectangle_clip_space,
-}
-
-add_rectangle_rounded_screen_space :: proc(pos, size: [2]f32, roundness: f32, color: [4]u8) {
-	x, y := to_clip_space(pos.x, pos.y)
-	add_rectangle_rounded_clip_space(x, y, size, roundness, color)
-}
-
-add_rectangle_rounded_clip_space :: proc(x, y: f32, size: [2]f32, roundness: f32, color: [4]u8) {
 
 	// world space
 	half_w, half_h := size.x / 2, size.y / 2
-	append_rectangle_vertexes(x, y, size, roundness, {half_w, half_h}, pack_color(color))
-}
-
-add_rectangle_rounded :: proc {
-	add_rectangle_rounded_screen_space,
-	add_rectangle_rounded_clip_space,
-}
-
-@(private = "file")
-append_rectangle_vertexes :: #force_inline proc(
-	x, y: f32,
-	size: [2]f32,
-	roundness: f32,
-	half: [2]f32,
-	color: u32,
-) {
 
 	// clip_space
 	width, height := (size.x / f32(render_width) * 2), (size.y / f32(render_height)) * 2
@@ -112,29 +77,29 @@ append_rectangle_vertexes :: #force_inline proc(
 	// *---+ 0
 	// |---|
 	// +---+
-	append_vertex(Vertex{x, y, color, {-half.x, half.y}, roundness})
+	append_vertex(Vertex{x, y, color, {-half_w, half_h}, roundness})
 
 	// +---* 1
 	// |---|
 	// +---+
-	append_vertex(Vertex{x + width, y, color, {half.x, half.y}, roundness})
+	append_vertex(Vertex{x + width, y, color, {half_w, half_h}, roundness})
 
 	// +---+ 2
 	// |---|
 	// *---+
-	append_vertex(Vertex{x, y - height, color, {-half.x, -half.y}, roundness})
-	append_vertex(Vertex{x, y - height, color, {-half.x, -half.y}, roundness})
+	append_vertex(Vertex{x, y - height, color, {-half_w, -half_h}, roundness})
+	append_vertex(Vertex{x, y - height, color, {-half_w, -half_h}, roundness})
 
 
 	// +---* 1
 	// |---|
 	// +---+
-	append_vertex(Vertex{x + width, y, color, {half.x, half.y}, roundness})
+	append_vertex(Vertex{x + width, y, color, {half_w, half_h}, roundness})
 
 	// +---+ 3
 	// |---|
 	// +---*
-	append_vertex(Vertex{x + width, y - height, color, {half.x, -half.y}, roundness})
+	append_vertex(Vertex{x + width, y - height, color, {half_w, -half_h}, roundness})
 }
 
 add_circle_screen_space :: proc(pos: [2]f32, roundness: f32, color: [4]u8) {
