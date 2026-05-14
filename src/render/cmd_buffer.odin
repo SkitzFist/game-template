@@ -64,11 +64,11 @@ draw_rectangle :: proc(pos, size: [2]f32, color: Color) {
 	}
 }
 
-draw_rectangle_rounded :: proc(pos, size: [2]f32, radius: f32, color: Color) {
+draw_rectangle_rounded :: proc(pos, size: [2]f32, roundness: f32, color: Color) {
 	add_draw_command(.PRIMITIVE, 2)
 
 	when BACKEND == .OPENGL {
-		gl.add_rectangle_rounded(pos, size, radius, color)
+		gl.add_rectangle_rounded(pos, size, roundness, color)
 	}
 }
 

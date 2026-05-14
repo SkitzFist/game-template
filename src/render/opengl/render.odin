@@ -8,10 +8,13 @@ import "vendor:glfw"
 TAG :: "[OPENGL]"
 
 GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 1
+GL_MINOR_VERSION :: 2
 
 @(private)
 render_width, render_height: i32
+
+@(private)
+TIME: f32
 
 // ---- WINDOW ---- //
 pre_window_create :: proc() {
@@ -39,6 +42,7 @@ init :: proc() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+	gpu_data_init()
 	primitives_init()
 }
 
@@ -49,18 +53,18 @@ on_frame_buffer_size_changed :: proc(width, height: i32) {
 }
 
 shutdown :: proc() {
+	gpu_data_shutdown()
 	primitives_shutdown()
 }
 
 // --- FRAME --- //
-draw_begin :: proc() {
-	primitives.count = 0
-	primitives.is_dirty = false
-	primitives.last_drawn = 0
+draw_begin :: proc(time: f32) {
+	TIME = time
+	gpu_data_begin_frame()
 }
 
 draw_end :: proc() {
-	primitives_data_to_gpu()
+	gpu_data_upload()
 }
 
 

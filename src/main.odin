@@ -77,7 +77,7 @@ tick :: proc(dt: f32) {
 	r.clear_screen(r.BLACK)
 
 	// run render systems
-	r.draw_begin()
+	r.draw_begin(window.get_time())
 
 	// if motion {
 	// 	rectangle_checker_test_motion()
@@ -87,47 +87,18 @@ tick :: proc(dt: f32) {
 
 	// rectangle_checker_color_test()
 
-	// offset: f32 = 100
-	// width, height := f32(window.width) - offset, f32(window.height) - offset
-
-
-	// r.draw_triangle({offset, height}, {width / 2, offset}, {width, height}, r.RED)
-
 	width, height := f32(window.width), f32(window.height)
 
-	l_width := (0.5 * math.sin(window.get_time()) + 0.5) * 20
-	r.draw_line(
-		{width / 4, height / 2},
-		{width / 2, height / 2},
-		f32(l_width),
-		r.GOLD,
-		roundness = 0.5,
+	r.draw_rectangle({20, 20}, {150, 150}, r.CYAN)
+
+	r.draw_rectangle_rounded(
+		{width / 2 - width / 8, height / 2 - height / 8},
+		{width / 4, height / 4},
+		0.8,
+		r.BLUE,
 	)
 
-
-	// r.draw_rectangle(
-	// 	{width / 2 - width / 8, height / 2 - height / 8},
-	// 	{width / 4, height / 4},
-	// 	r.BLUE,
-	// )
-
-	// // rectangle_rounded_checker_test()
-	// x: f32 = 0.0
-	// y: f32 = 0.0
-	// width: f32 = 100.0
-	// height: f32 = 100.0
-
-	// r.draw_triangle({0, height}, {width, height}, {0, height + height}, r.GREEN)
-	// r.draw_rectangle_rounded({x, y}, {width, height}, 0, r.BLUE)
-
-	// r.draw_circle({width / 2, height / 2}, width / 2, {255, 0, 0, 155})
-
-	// r.draw_triangle_rounded(
-	// 	{1, height - 1},
-	// 	{width / 2, 1},
-	// 	{width - 1, height - 1},
-	// 	{255, 0, 0, 255},
-	// )
+	// rectangle_rounded_checker_test()
 
 	r.draw_end()
 	window.swap_buffer()
