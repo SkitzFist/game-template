@@ -1,4 +1,8 @@
-#version 410 core
+#version 420 core
+
+layout(std140, binding = 0) uniform GlobalData {
+    float time;
+};
 
 in vec4 vColor;
 in vec2 vLocal;
@@ -16,7 +20,10 @@ float roundedRectSDF(vec2 p, vec2 halfSize, float radius)
 void main() {
     float maxRadius = min(vHalfSize.x, vHalfSize.y);
     float radius = clamp(vRadius, 0.0, 1.0) * maxRadius;
-    float distance = roundedRectSDF(vLocal, vHalfSize, radius);
+
+    vec2 p = vLocal;
+    float distance = roundedRectSDF(p, vHalfSize, radius);
+    
     float aa = max(fwidth(distance), 0.001);
     float alpha = 1.0 - smoothstep(0.0, aa, distance);
 

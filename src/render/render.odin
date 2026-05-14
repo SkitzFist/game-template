@@ -40,9 +40,9 @@ shutdown :: proc() {
 
 // ---- FRAME ----
 
-draw_begin :: proc() {
+draw_begin :: proc(time: f64) {
 	when BACKEND == .OPENGL {
-		gl.draw_begin()
+		gl.draw_begin(f32(time))
 	}
 }
 
