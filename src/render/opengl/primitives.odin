@@ -2,6 +2,7 @@ package opengl
 
 import gl "vendor:OpenGL"
 
+import "core:log"
 import "core:math"
 
 Primitives :: struct {
@@ -215,8 +216,15 @@ add_line :: proc {
 
 draw_primitives :: proc(count: i32) {
 	// TODO should always check what previous used shader/vao is, and only switch if different
-	gl.UseProgram(primitives_shader)
-	gl.BindVertexArray(primitives.vao)
+	if should_bind_shader(primitives_shader) {
+		bind_shader(primitives_shader)
+	}
+
+	if should_bind_vao(primitives.vao) {
+		bind_vao(primitives.vao)
+	}
+
+	log.infof("Drawing %i triangles", count)
 
 	// three vertexes per triangle
 	vertex_count := count * 3

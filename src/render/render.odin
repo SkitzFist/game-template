@@ -62,3 +62,4 @@ clear_screen :: proc(color: Color) {
 		)
 	}
 }
+

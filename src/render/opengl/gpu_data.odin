@@ -20,7 +20,7 @@ vertexes: [dynamic]Vertex
 vbo, ubo, count: u32
 
 @(private = "file")
-is_dirty: bool
+is_dirty: bool = true
 
 last_drawn: i32
 
@@ -45,7 +45,6 @@ gpu_data_shutdown :: proc() {
 }
 
 append_vertex :: proc(vertex: Vertex) {
-
 	if int(count) >= len(vertexes) {
 		append_elem(&vertexes, vertex)
 		is_dirty = true
@@ -60,17 +59,20 @@ append_vertex :: proc(vertex: Vertex) {
 	   vertexes[count].color != vertex.color ||
 	   vertexes[count].local != vertex.local ||
 	   vertexes[count].radius != vertex.radius {
+		vertexes[count] = vertex
 		is_dirty = true
 	}
 
-	vertexes[count] = vertex
 	count += 1
 }
 
 gpu_data_begin_frame :: proc() {
 	count = 0
-	is_dirty = false
 	last_drawn = 0
+}
+
+gpu_data_set_dirty :: proc() {
+	is_dirty = true
 }
 
 gpu_data_upload :: proc() {
@@ -81,10 +83,10 @@ gpu_data_upload :: proc() {
 			raw_data(vertexes[:]),
 			gl.DYNAMIC_DRAW,
 		)
+		is_dirty = false
 	}
 
 	gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
-
 	gl.BufferSubData(gl.UNIFORM_BUFFER, 0, size_of(f32), &TIME)
 
 	// bind back to vertex buffer, this way we can be sure to not rebind when drawing.
