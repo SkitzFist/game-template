@@ -63,6 +63,18 @@ init :: proc() -> runtime.Context {
 
 motion: bool
 frame: int
+cell_size: f32 = 5.0
+Test :: enum {
+	ALL_PRIMITIVES,
+	RECTANGLE_CHECKER,
+	RECTANGLE_CHECKER_COLOR,
+	RECTANGLE_CHECKER_MOTION,
+	TRIANGLE_STATIC,
+	TRIANGLE_PULSE_TEST,
+}
+
+test: Test = .TRIANGLE_STATIC
+
 tick :: proc(dt: f32) {
 	fmt.println("Fps:", 1 / dt)
 	frame += 1
@@ -71,8 +83,25 @@ tick :: proc(dt: f32) {
 		window.set_close(true)
 	}
 
-	if input.is_pressed(input.Key.SPACE) {
-		motion = !motion
+	if input.is_pressed(input.Key.LEFT) {
+		next := int(test) - 1
+		if next < 0 {
+			next = len(Test) - 1
+		}
+		next %= len(Test)
+		test = Test(next)
+	} else if input.is_pressed(input.Key.RIGHT) {
+		next := (int(test) + 1) % len(Test)
+		test = Test(next)
+	}
+
+	size: f32 = input.is_held(input.Key.LEFT_CONTROL) ? 2.0 : 0.5
+
+	if input.is_pressed(input.Key.UP) {
+		cell_size += size
+	} else if input.is_pressed(input.Key.DOWN) {
+		cell_size -= size
+		cell_size = max(cell_size, 0)
 	}
 
 	// run update systems
@@ -81,13 +110,29 @@ tick :: proc(dt: f32) {
 	// run render systems
 	r.draw_begin(window.get_time())
 
-	// if motion {
-	// 	rectangle_checker_test_motion()
-	// } else {
-	// 	rectangle_checker_test()
-	// }
+	switch test {
+	case .ALL_PRIMITIVES:
+		all_primitives()
+	case .RECTANGLE_CHECKER:
+		rectangle_checker_test(cell_size)
+	case .RECTANGLE_CHECKER_COLOR:
+		rectangle_checker_color_test(cell_size)
+	case .RECTANGLE_CHECKER_MOTION:
+		rectangle_checker_test_motion(cell_size)
+	case .TRIANGLE_STATIC:
+		triangle_static_test(cell_size)
+	case .TRIANGLE_PULSE_TEST:
+		triangle_pulse_test(cell_size)
+	}
 
-	// rectangle_checker_color_test()
+	r.draw_end()
+	window.swap_buffer()
+
+	// reset input
+	input.post_frame()
+}
+
+all_primitives :: proc() {
 
 	width, height := f32(window.width), f32(window.height)
 
@@ -106,20 +151,11 @@ tick :: proc(dt: f32) {
 
 	length := f32(0.5 * math.sin(window.get_time()) + 0.5) * size
 	r.draw_line({x, y + size * 1.5}, {1.0, 0.0}, length, 25.0, r.BLUE, 0.8)
-
-	// rectangle_rounded_checker_test()
-
-	r.draw_end()
-	window.swap_buffer()
-
-	// reset input
-	input.post_frame()
 }
 
-rectangle_checker_test :: proc() {
+rectangle_checker_test :: proc(cell_size: f32) {
 	window_width := f32(window.width)
 	window_height := f32(window.height)
-	cell_size: f32 = 1.5
 	cols := i32(window_width / cell_size) + 2
 	rows := i32(window_height / cell_size) + 2
 
@@ -136,14 +172,13 @@ rectangle_checker_test :: proc() {
 	}
 }
 
-rectangle_rounded_checker_test :: proc() {
+rectangle_rounded_checker_test :: proc(cell_size: f32) {
 	window_width := f32(window.width)
 	window_height := f32(window.height)
 
 	t := window.get_time()
 	pulse := f32((math.sin(t) + 1.0) * 0.5)
 
-	cell_size: f32 = 2.5
 	cols := i32(window_width / cell_size) + 2
 	rows := i32(window_height / cell_size) + 2
 	// roundness := (math.sin(t * 2.0 * math.PI / 10) + 1.0) * 0.5
@@ -163,10 +198,9 @@ rectangle_rounded_checker_test :: proc() {
 	}
 }
 
-rectangle_checker_color_test :: proc() {
+rectangle_checker_color_test :: proc(cell_size: f32) {
 	window_width := f32(window.width)
 	window_height := f32(window.height)
-	cell_size: f32 = 2.0
 	cols := i32(window_width / cell_size) + 2
 	rows := i32(window_height / cell_size) + 2
 
@@ -185,11 +219,10 @@ rectangle_checker_color_test :: proc() {
 	}
 }
 
-rectangle_checker_test_motion :: proc() {
+rectangle_checker_test_motion :: proc(cell_size: f32) {
 	window_width := f32(window.width)
 	window_height := f32(window.height)
 	time := window.get_time()
-	cell_size: f32 = 32
 	cols := i32(window_width / cell_size) + 2
 	rows := i32(window_height / cell_size) + 2
 
@@ -217,6 +250,31 @@ rectangle_checker_test_motion :: proc() {
 				{cell_size, cell_size},
 				color,
 			)
+		}
+	}
+}
+
+triangle_static_test :: proc(cell_size: f32) {
+	window_width := f32(window.width)
+	window_height := f32(window.height)
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
+
+	for row in 0 ..< rows {
+		y1 := f32(row) * cell_size
+		y2 := y1 + cell_size
+
+		for col in 0 ..< cols {
+			x1 := f32(col) * cell_size
+			x2 := x1 + cell_size
+
+			if (row + col) % 2 == 0 {
+				r.draw_triangle({x1, y1}, {x2, y1}, {x2, y2}, r.BLUE)
+				r.draw_triangle({x1, y1}, {x2, y2}, {x1, y2}, r.GREEN)
+			} else {
+				r.draw_triangle({x1, y1}, {x2, y1}, {x1, y2}, r.GREEN)
+				r.draw_triangle({x2, y1}, {x2, y2}, {x1, y2}, r.BLUE)
+			}
 		}
 	}
 }
@@ -300,3 +358,4 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	mem.tracking_allocator_clear(allocator)
 	return err
 }
+
