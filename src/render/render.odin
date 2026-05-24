@@ -20,6 +20,8 @@ init :: proc() {
 	when BACKEND == .OPENGL {
 		gl.init()
 	}
+
+	//debug
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
@@ -35,6 +37,7 @@ shutdown :: proc() {
 
 	delete(draw_commands)
 	delete(draw_count)
+	delete(texture_index)
 }
 
 // ---- FRAME ----

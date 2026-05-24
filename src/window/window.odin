@@ -219,3 +219,4 @@ frame_buffer_size_callback: glfw.FramebufferSizeProc : proc "c" (
 		framebuffer_resize_callback(width, height)
 	}
 }
+
