@@ -13,6 +13,8 @@ import "core:math"
 
 tracking_allocator: mem.Tracking_Allocator
 
+wall, tex2: u32
+
 main :: proc() {
 
 
@@ -26,6 +28,10 @@ main :: proc() {
 	r.attach_context(window.width, window.height, window.gl_set_proc_address)
 	window.set_framebuffer_resize_callback(r.on_frame_buffer_size_changed)
 	r.init()
+
+
+	wall = r.load_texture("assets/sprites/wall.jpg")
+	tex2 = r.load_texture("assets/sprites/textures2.png")
 
 	prev, curr: f64 = window.get_time(), 0.0
 	dt: f64
@@ -63,7 +69,7 @@ init :: proc() -> runtime.Context {
 
 motion: bool
 frame: int
-cell_size: f32 = 5.0
+cell_size: f32 = 2.0
 Test :: enum {
 	ALL_PRIMITIVES,
 	RECTANGLE_CHECKER,
@@ -71,9 +77,13 @@ Test :: enum {
 	RECTANGLE_CHECKER_MOTION,
 	TRIANGLE_STATIC,
 	TRIANGLE_PULSE_TEST,
+	SINGLE_TEXTURE,
+	TWO_TEXTURES,
+	TEXTURE_CHECKER,
+	TEXTURE_PART,
 }
 
-test: Test = .TRIANGLE_STATIC
+test: Test = .TEXTURE_PART
 
 tick :: proc(dt: f32) {
 	fmt.println("Fps:", 1 / dt)
@@ -123,13 +133,80 @@ tick :: proc(dt: f32) {
 		triangle_static_test(cell_size)
 	case .TRIANGLE_PULSE_TEST:
 		triangle_pulse_test(cell_size)
+	case .SINGLE_TEXTURE:
+		single_texture()
+	case .TWO_TEXTURES:
+		two_textures()
+	case .TEXTURE_CHECKER:
+		texture_checker_test(cell_size)
+	case .TEXTURE_PART:
+		texture_part_test()
 	}
+
+	// r.draw_rectangle(0, 200, r.BLUE)
+	// r.draw_circle(200, 50, 50)
+	// r.draw_texture(tex2, 500, {r.texture_width(tex2), r.texture_height(tex2)}, r.WHITE)
 
 	r.draw_end()
 	window.swap_buffer()
 
 	// reset input
 	input.post_frame()
+}
+
+single_texture :: proc() {
+	r.draw_texture(wall, 0, {f32(window.width), f32(window.height)}, r.WHITE)
+}
+
+two_textures :: proc() {
+	r.draw_texture(wall, 0, {r.texture_width(wall), r.texture_height(wall)}, r.WHITE)
+	r.draw_texture(tex2, {250, 250}, {r.texture_width(tex2), r.texture_height(tex2)}, r.WHITE)
+}
+
+texture_checker_test :: proc(cell_size: f32) {
+	window_width := f32(window.width)
+	window_height := f32(window.height)
+	cols := i32(window_width / cell_size) + 2
+	rows := i32(window_height / cell_size) + 2
+
+	for row in 0 ..< rows {
+		for col in 0 ..< cols {
+			color := (row + col) % 2 == 0 ? r.BLUE : r.GREEN
+
+			r.draw_texture(
+				wall,
+				{f32(col) * cell_size, f32(row) * cell_size},
+				{cell_size, cell_size},
+				color,
+			)
+		}
+	}
+}
+
+texture_part_test :: proc() {
+
+	t_w := r.texture_width(tex2)
+	t_h := r.texture_height(tex2)
+
+	h_w := t_w / 2
+	h_h := t_h / 2
+
+	start: f32 = 200
+
+	p := 0.5 * math.sin(window.get_time()) + 0.5
+	offset: f32 = f32(p) * 50
+
+	r.draw_texture(tex2, start, {h_w, h_h}, {0, 0, h_w, h_h}, r.WHITE)
+	r.draw_texture(tex2, {start + h_w + offset, start}, {h_w, h_h}, {h_w, 0, h_w, h_h}, r.WHITE)
+	r.draw_texture(tex2, {start, start + h_h + offset}, {h_w, h_h}, {0, h_h, h_w, h_h}, 255)
+
+	r.draw_texture(
+		tex2,
+		{start + h_w + offset, start + h_h + offset},
+		{h_w, h_h},
+		{h_w, h_h, h_w, h_h},
+		255,
+	)
 }
 
 all_primitives :: proc() {

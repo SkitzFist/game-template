@@ -54,6 +54,7 @@ append_vertex :: proc(vertex: Vertex) {
 
 	// TODO keep track of changed indices and only upload that
 	// TODO option to opt out and always mark dirty
+	// TODO this check is so godamn slow, lowers with ~20 fps on 1.8 million triangles
 	if vertexes[count].x != vertex.x ||
 	   vertexes[count].y != vertex.y ||
 	   vertexes[count].color != vertex.color ||

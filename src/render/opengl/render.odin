@@ -48,6 +48,7 @@ init :: proc() {
 
 	gpu_data_init()
 	primitives_init()
+	textures_init()
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
@@ -59,6 +60,7 @@ on_frame_buffer_size_changed :: proc(width, height: i32) {
 shutdown :: proc() {
 	gpu_data_shutdown()
 	primitives_shutdown()
+	texture_shutdown()
 }
 
 // --- FRAME --- //
@@ -77,3 +79,4 @@ clear_screen :: proc(r, g, b, a: f32) {
 	gl.ClearColor(r, g, b, a)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
+
