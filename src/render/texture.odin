@@ -49,8 +49,10 @@ texture_widths: [MAX_TEXTURES]i32
 texture_heights: [MAX_TEXTURES]i32
 texture_formats: [MAX_TEXTURES]Texture_Format
 // texture_pixels: [MAX_TEXTURES]Pixel_Buffer_Entry
+@(private = "file")
 occupied: [MAX_TEXTURES]bool
 
+@(private = "file")
 get_next_free_index :: proc() -> u32 {
 	for i in 0 ..< MAX_TEXTURES {
 		if occupied[i] == false {
@@ -61,7 +63,12 @@ get_next_free_index :: proc() -> u32 {
 	panic("No unnoccupied texture slot, time to implement membuffer")
 }
 
-load_texture :: proc(path: cstring) -> u32 {
+load_texture :: proc {
+	load_texture_path,
+	load_texture_file,
+}
+
+load_texture_path :: proc(path: cstring) -> u32 {
 	when BACKEND == .OPENGL {
 		width, height, channels: i32
 		image.set_flip_vertically_on_load(1)
@@ -75,16 +82,20 @@ load_texture :: proc(path: cstring) -> u32 {
 		format := texture_format_from_stb_channels(channels)
 		log.info("Image loaded:", path, width, height, format)
 
-		index := get_next_free_index()
-		occupied[index] = true
-
-		texture_ids[index] = gl.load_texture(img_data, width, height, u32(format))
-		texture_widths[index] = width
-		texture_heights[index] = height
-		texture_formats[index] = format
-
-		return index
+		return load_texture_file(img_data, width, height, format)
 	}
+}
+
+load_texture_file :: proc(data: [^]u8, width, height: i32, format: Texture_Format) -> u32 {
+	index := get_next_free_index()
+	occupied[index] = true
+
+	texture_ids[index] = gl.load_texture(data, width, height, u32(format))
+	texture_widths[index] = width
+	texture_heights[index] = height
+	texture_formats[index] = format
+
+	return index
 }
 
 unload_texture :: proc(index: u32) {
