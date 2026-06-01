@@ -22,6 +22,7 @@ init :: proc() {
 	}
 
 	//debug
+	load_font("assets/fonts/roboto.ttf")
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
@@ -35,9 +36,7 @@ shutdown :: proc() {
 		gl.shutdown()
 	}
 
-	delete(draw_commands)
-	delete(draw_count)
-	delete(texture_index)
+	cmd_buffer_shutdown()
 }
 
 // ---- FRAME ----

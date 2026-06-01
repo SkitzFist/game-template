@@ -181,10 +181,11 @@ draw_textures :: proc(texture: u32, triangle_count: i32) {
 		bind_texture(texture)
 	}
 
-	log.infof("Texture count: %i", triangle_count / 2)
+	// log.infof("Texture count: %i", triangle_count / 2)
 
 	vertex_count := triangle_count * 3
 
 	gl.DrawArrays(gl.TRIANGLES, last_drawn, vertex_count)
 	last_drawn += vertex_count
 }
+

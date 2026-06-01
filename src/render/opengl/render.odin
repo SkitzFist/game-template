@@ -49,6 +49,7 @@ init :: proc() {
 	gpu_data_init()
 	primitives_init()
 	textures_init()
+	bitmap_init()
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
@@ -61,6 +62,7 @@ shutdown :: proc() {
 	gpu_data_shutdown()
 	primitives_shutdown()
 	texture_shutdown()
+	bitmap_shutdown()
 }
 
 // --- FRAME --- //

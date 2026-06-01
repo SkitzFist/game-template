@@ -224,7 +224,7 @@ draw_primitives :: proc(count: i32) {
 		bind_vao(primitives.vao)
 	}
 
-	log.infof("Drawing %i triangles", count)
+	// log.infof("Drawing %i triangles", count)
 
 	// three vertexes per triangle
 	vertex_count := count * 3

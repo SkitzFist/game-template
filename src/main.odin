@@ -12,6 +12,8 @@ import "core:fmt"
 import "core:math"
 
 tracking_allocator: mem.Tracking_Allocator
+arena: mem.Arena
+arena_buffer: [1024 * 1024]byte
 
 wall, tex2: u32
 
@@ -28,7 +30,6 @@ main :: proc() {
 	r.attach_context(window.width, window.height, window.gl_set_proc_address)
 	window.set_framebuffer_resize_callback(r.on_frame_buffer_size_changed)
 	r.init()
-
 
 	wall = r.load_texture("assets/sprites/wall.jpg")
 	tex2 = r.load_texture("assets/sprites/textures2.png")
@@ -64,6 +65,11 @@ init :: proc() -> runtime.Context {
 		log.info("[MAIN] memory tracker initialized")
 	}
 
+	// Arena allocator
+	mem.arena_init(&arena, arena_buffer[:])
+	context.temp_allocator = mem.arena_allocator(&arena)
+	log.info("temp allocator (arena stack buffer) initialized")
+
 	return context
 }
 
@@ -81,9 +87,11 @@ Test :: enum {
 	TWO_TEXTURES,
 	TEXTURE_CHECKER,
 	TEXTURE_PART,
+	TEXT_SINGLE_LINE,
+	TEXT_MULTI_LINE,
 }
 
-test: Test = .TEXTURE_PART
+test: Test = .TEXT_MULTI_LINE
 
 tick :: proc(dt: f32) {
 	fmt.println("Fps:", 1 / dt)
@@ -141,17 +149,61 @@ tick :: proc(dt: f32) {
 		texture_checker_test(cell_size)
 	case .TEXTURE_PART:
 		texture_part_test()
+	case .TEXT_SINGLE_LINE:
+		text_single_line()
+	case .TEXT_MULTI_LINE:
+		text_multi_line()
 	}
 
 	// r.draw_rectangle(0, 200, r.BLUE)
 	// r.draw_circle(200, 50, 50)
 	// r.draw_texture(tex2, 500, {r.texture_width(tex2), r.texture_height(tex2)}, r.WHITE)
+	//
 
 	r.draw_end()
 	window.swap_buffer()
 
 	// reset input
 	input.post_frame()
+
+	// reset arena alloc
+	mem.arena_free_all(&arena)
+}
+
+text_single_line :: proc() {
+	ascii: [95]u8
+	for a, i in 32 ..< 95 + 32 {
+		ascii[i] = u8(a)
+	}
+	text: string = string(ascii[:])
+	pos: [2]f32 = {200, 200}
+	r.draw_text(text, pos, r.WHITE)
+	text_width := r.text_width(r.FONT_DEFAULT, text)
+	text_height := r.text_height(r.FONT_DEFAULT, text)
+	r.draw_line_direction(pos + {0, text_height + 10}, {90, 0}, text_width, 3.0, r.BLUE)
+	r.draw_line_direction(pos - {10, 0}, {0, 90}, text_height, 3.0, r.BLUE)
+}
+
+text_multi_line :: proc() {
+	ascii: [95 * 2 + 1]u8
+	for a, i in 32 ..< 95 + 32 {
+		ascii[i] = u8(a)
+	}
+
+	ascii[95] = u8('\n')
+
+	for a, i in 32 ..< 95 + 32 {
+		ascii[i + 95 + 1] = u8(a)
+	}
+
+	text: string = string(ascii[:])
+	pos: [2]f32 = {200, 200}
+
+	r.draw_text(text, pos, r.WHITE)
+	text_width := r.text_width(r.FONT_DEFAULT, text)
+	text_height := r.text_height(r.FONT_DEFAULT, text)
+	r.draw_line_direction(pos + {0, text_height + 10}, {90, 0}, text_width, 3.0, r.BLUE)
+	r.draw_line_direction(pos - {10, 0}, {0, 90}, text_height, 3.0, r.BLUE)
 }
 
 single_texture :: proc() {
@@ -171,14 +223,29 @@ texture_checker_test :: proc(cell_size: f32) {
 
 	for row in 0 ..< rows {
 		for col in 0 ..< cols {
-			color := (row + col) % 2 == 0 ? r.BLUE : r.GREEN
+			is_even := (row + col) % 2 == 0
+			if is_even {
+				r.draw_texture(
+					wall,
+					{f32(col) * cell_size, f32(row) * cell_size},
+					{cell_size, cell_size},
+					255,
+				)
+			}
+		}
+	}
 
-			r.draw_texture(
-				wall,
-				{f32(col) * cell_size, f32(row) * cell_size},
-				{cell_size, cell_size},
-				color,
-			)
+	for row in 0 ..< rows {
+		for col in 0 ..< cols {
+			is_even := (row + col) % 2 == 0
+			if !is_even {
+				r.draw_texture(
+					tex2,
+					{f32(col) * cell_size, f32(row) * cell_size},
+					{cell_size, cell_size},
+					255,
+				)
+			}
 		}
 	}
 }
