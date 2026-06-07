@@ -5,5 +5,9 @@ Backend :: enum {
 }
 
 
-BACKEND :: #config(BACKEND, Backend.OPENGL)
+BACKEND_STR :: #config(RENDER_BACKEND, "OPENGL")
+
+when BACKEND_STR == "OPENGL" {
+	BACKEND :: Backend.OPENGL
+}
 

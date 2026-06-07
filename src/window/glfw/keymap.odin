@@ -1,6 +1,6 @@
-package window
+package glfw_i
 
-import "../input"
+import "../../input"
 
 key_lookup: [349]input.Key = {
 	0 ..= 31    = .NONE,
