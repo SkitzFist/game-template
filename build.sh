@@ -28,7 +28,9 @@ elif [ $PLATFORM == "DESKTOP" ]; then
 
     odin build src/ \
         -out:$OUT_DIR/game \
-        -o:speed
+        -o:speed \
+        -define:PLATFORM=DESKTOP \
+        -define:RENDER_BACKEND=OPENGL
 
     echo "Build created in ${OUT_DIR}"
 fi

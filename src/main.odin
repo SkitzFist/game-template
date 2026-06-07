@@ -27,7 +27,7 @@ main :: proc() {
 	window.create_fullscreen(PROJECT_NAME, r.context_config())
 	defer (window.destroy())
 
-	r.attach_context(window.width, window.height, window.gl_set_proc_address)
+	r.attach_context(i32(window.width), i32(window.height), window.gl_set_proc_address)
 	window.set_framebuffer_resize_callback(r.on_frame_buffer_size_changed)
 	r.init()
 
@@ -49,7 +49,6 @@ main :: proc() {
 }
 
 init :: proc() -> runtime.Context {
-
 	context = runtime.default_context()
 	context.logger = log.create_console_logger(opt = {.Level, .Line, .Terminal_Color})
 
