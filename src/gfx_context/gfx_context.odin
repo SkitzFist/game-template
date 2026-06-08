@@ -1,7 +1,9 @@
 package gfx_context
+wall, tex2: u32
 
 API :: enum {
 	OPENGL,
+	WEBGL,
 }
 
 Profile :: enum {

@@ -4,8 +4,9 @@ import tt "vendor:stb/truetype"
 
 import "core:fmt"
 import "core:math"
-import "core:os"
 import "core:strings"
+
+import "../platform"
 
 /*
 	| texture_index | baked_chars
@@ -39,12 +40,7 @@ get_next_free_index :: proc() -> u32 {
 load_font :: proc(path: string) -> u32 {
 	font_index := get_next_free_index()
 
-	font_data, err := os.read_entire_file(path, context.allocator)
-	defer delete(font_data)
-
-	if err != os.General_Error.None {
-		panic(fmt.aprint("Could not load font:", path, "Error:", err))
-	}
+	font_data := platform.load_file(path, context.temp_allocator)
 
 	atlas_size: i32 = 512
 	bitmap := make([]u8, atlas_size * atlas_size)

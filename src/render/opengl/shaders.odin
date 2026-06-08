@@ -1,3 +1,4 @@
+#+build linux, windows
 package opengl
 
 import "core:log"
@@ -50,3 +51,4 @@ compile_shader :: proc(shader: u32, src: [^]cstring, size: i32) {
 		log.error(TAG, "Failed compiling shader:", string(ERROR_BUFFER[:LENGTH]))
 	}
 }
+

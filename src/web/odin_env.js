@@ -1,4 +1,5 @@
 export function create_odin_env(getWasmMemory) {
+
   return {
     write(fd, ptr, len) {
       const wasmMemory = getWasmMemory()

@@ -1,17 +1,12 @@
-import { create_canvas_2d_env } from "./canvas_2d.js"
-import { create_odin_env } from "./odin_env.js"
-
 const wasmUrl = "./game.wasm"
-
-let wasmMemory = null
-
-export function create_game_env(getMemory) {
-  return create_canvas_2d_env(getMemory)
-}
 
 function startGame(wasm) {
   const odin = wasm.exports
   odin.web_init()
+
+  if (!odin.web_tick) {
+    return
+  }
 
   let prev
   const tick = (ts) => {
@@ -38,16 +33,17 @@ function startGame(wasm) {
 
 async function loadWasm() {
   const bytes = await (await fetch(wasmUrl)).arrayBuffer()
-
-  const imports = {
-    odin_env: create_odin_env(() => wasmMemory),
-    env: {},
-    game_env: create_game_env(() => wasmMemory),
-  }
+  const memory = new window.odin.WasmMemoryInterface()
+  const imports = window.odin.setupDefaultImports(memory, null, memory.memory)
 
   try {
     const { instance } = await WebAssembly.instantiate(bytes, imports)
-    wasmMemory = instance.exports.memory
+
+    memory.setExports(instance.exports)
+    if (instance.exports.memory) {
+      memory.setMemory(instance.exports.memory)
+    }
+
     return instance
   } catch (err) {
     console.error(err)

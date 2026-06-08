@@ -1,3 +1,4 @@
+#+build linux, windows
 package opengl
 
 import gl "vendor:OpenGL"

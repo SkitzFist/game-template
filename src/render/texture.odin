@@ -83,6 +83,8 @@ load_texture_path :: proc(path: cstring) -> u32 {
 		log.info("Image loaded:", path, width, height, format)
 
 		return load_texture_file(img_data, width, height, format)
+	} else when BACKEND == .WEBGL {
+		return 0
 	}
 }
 
@@ -90,7 +92,12 @@ load_texture_file :: proc(data: [^]u8, width, height: i32, format: Texture_Forma
 	index := get_next_free_index()
 	occupied[index] = true
 
-	texture_ids[index] = gl.load_texture(data, width, height, u32(format))
+	when BACKEND == .OPENGL {
+		texture_ids[index] = gl.load_texture(data, width, height, u32(format))
+	} else when BACKEND == .WEBGL {
+		//not implemented yet
+	}
+
 	texture_widths[index] = width
 	texture_heights[index] = height
 	texture_formats[index] = format
@@ -101,6 +108,8 @@ load_texture_file :: proc(data: [^]u8, width, height: i32, format: Texture_Forma
 unload_texture :: proc(index: u32) {
 	when BACKEND == .OPENGL {
 		gl.unload_texture(&texture_ids[index])
+	} else when BACKEND == .WEBGL {
+		// no impl yet
 	}
 
 	occupied[index] = false

@@ -116,6 +116,8 @@ apply_context_config :: proc(config: gfx.Config) {
 		if config.profile == .CORE {
 			glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 		}
+	case .WEBGL:
+	//no impl yet
 	}
 
 	if config.samples > 0 {
@@ -217,3 +219,4 @@ frame_buffer_size_callback: glfw.FramebufferSizeProc : proc "c" (
 		framebuffer_resize_callback(width, height)
 	}
 }
+
