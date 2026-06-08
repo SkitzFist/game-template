@@ -12,5 +12,8 @@ when PLATFORM_STR == "DESKTOP" {
 	PLATFORM :: Platform.DESKTOP
 } else when PLATFORM_STR == "WEB" {
 	PLATFORM :: Platform.WEB
+} else {
+	//fallback
+	PLATFORM :: Platform.DESKTOP
 }
 

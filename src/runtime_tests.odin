@@ -6,6 +6,7 @@ import "window"
 
 import "core:math"
 
+wall, tex2: u32
 motion: bool
 frame: int
 cell_size: f32 = 2.0
