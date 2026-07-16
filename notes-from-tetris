@@ -1,0 +1,41 @@
+I made a simple tetris clone from this template in order to feel out ergonomics and find bugs.
+Here is the notes from that project:
+
+Tasks (in prio):
+1. Fix bug in cmd_buffer. Bug will resolve itself when moving over to the handle system.
+2. Proper opengl version handling. Before initializing should check what version is available and go for the highest possible. 
+	2.1 Should rewrite all basic shaders to the 3.3 version
+3. Fix up resize handling. Part of this task is figuring out what to do.
+4. Fix Text drawing. Two parts:
+	4.1 should be able to change font size.
+	4.2 api should take variadic argument and internally format it with bprint with an internal backing buffer.
+
+Raw notes from Tetris:
+1. Make onResizeCallbacks a list in window.odin
+2. Version handling in openGL. Older cards can use 3.3 while I used 4.2
+3. draw_text should take text in the same way as fmt.print does.
+4. when window changed size, can be handful to know old value or at least diff
+5. reorganize, now render code is spread out and interferes with game code. Should be a single package import (create api)
+6. change font size
+7. Bug in cmd_buffer, add_draw_command should only append texture index on new cmd, not on increment
+
+
+with notes:
+1. Make onResizeCallbacks a list in window.odin
+	1.1 Not sure about this one tbh. I don't like that the user doesn't control when the callbacks is happening. And I don't want the user to query for a 'window_resized bool' each frame either.
+2. Version handling in openGL. Older cards can use 3.3 while I used 4.2
+	2.1 This is a must fix. Need to look into if version can be dynamically changed on startup.
+	2.2 Shaders should be written in the 3.3 version, while leaving room for compute shaders at higher versions.
+3. draw_text should take text in the same way as fmt.print does.
+	3.1 lower prio, but definitely want to do it eventually.
+	3.2 could probalby have an internal string buffer and use bprint to format.
+4. when window changed size, can be handful to know old value or at least diff
+	4.1 should be baked into task with onResizeCallbacks.
+5. reorganize, now render code is spread out and interferes with game code. Should be a single package import (create api)
+	5.1 this is a must do, but I don't have to do it yet. Should work out a lot of other stuff first.
+6. change font size
+	6.1 must do.
+7. Bug in cmd_buffer, add_draw_command should only append texture index on new cmd, not on increment
+	7.1 should start with this. that bug is quite serious and won't let the user draw different stuff in the same frame.
+	7.2 Could probably start looking into changing into the handler version of cmd buffer as well. 
+
