@@ -3,7 +3,6 @@ package opengl
 
 import gl "vendor:OpenGL"
 
-import "core:log"
 import "core:math"
 
 Primitives :: struct {
@@ -215,8 +214,9 @@ add_line :: proc {
 	add_line_direction,
 }
 
-draw_primitives :: proc(count: i32) {
-	// TODO should always check what previous used shader/vao is, and only switch if different
+draw_primitives :: proc(count: u32) {
+	count := i32(count)
+
 	if should_bind_shader(primitives_shader) {
 		bind_shader(primitives_shader)
 	}

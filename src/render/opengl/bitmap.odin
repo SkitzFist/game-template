@@ -3,8 +3,6 @@ package opengl
 
 import gl "vendor:OpenGL"
 
-import "core:fmt"
-
 bitmap_frag := #load("../../shaders/bitmap.frag")
 bitmap_vert := #load("../../shaders/bitmap.vert")
 bitmap_shader: u32
@@ -17,7 +15,8 @@ bitmap_shutdown :: proc() {
 	gl.DeleteProgram(bitmap_shader)
 }
 
-draw_text :: proc(texture: u32, triangle_count: i32) {
+draw_text :: proc(texture: u32, triangle_count: u32) {
+	triangle_count := i32(triangle_count)
 	if should_bind_shader(bitmap_shader) {
 		bind_shader(bitmap_shader)
 	}

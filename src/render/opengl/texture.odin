@@ -3,8 +3,6 @@ package opengl
 
 import gl "vendor:OpenGL"
 
-import "core:log"
-
 textures_vert := #load("../../shaders/textures.vert")
 textures_frag := #load("../../shaders/textures.frag")
 texture_shader: u32
@@ -169,7 +167,9 @@ add_texture_part :: proc(pos, size, texture_size_px: [2]f32, src_px: [4]f32, col
 
 }
 
-draw_textures :: proc(texture: u32, triangle_count: i32) {
+draw_textures :: proc(texture: u32, triangle_count: u32) {
+	triangle_count := i32(triangle_count)
+
 	if should_bind_shader(texture_shader) {
 		bind_shader(texture_shader)
 	}
