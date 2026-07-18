@@ -28,6 +28,8 @@ init :: proc() {
 
 	//debug
 	load_font("assets/fonts/roboto.ttf")
+
+	cmd_buffer_init()
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {

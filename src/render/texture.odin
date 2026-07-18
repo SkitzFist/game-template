@@ -7,6 +7,8 @@ import gl "opengl"
 //debug
 import "core:log"
 
+Texture_Index :: u16
+
 Texture_Format :: enum u32 {
 	GRAY,
 	GRAY_ALPHA,
@@ -53,10 +55,10 @@ texture_formats: [MAX_TEXTURES]Texture_Format
 occupied: [MAX_TEXTURES]bool
 
 @(private = "file")
-get_next_free_index :: proc() -> u32 {
+get_next_free_index :: proc() -> Texture_Index {
 	for i in 0 ..< MAX_TEXTURES {
 		if occupied[i] == false {
-			return u32(i)
+			return Texture_Index(i)
 		}
 	}
 
@@ -68,7 +70,7 @@ load_texture :: proc {
 	load_texture_file,
 }
 
-load_texture_path :: proc(path: cstring) -> u32 {
+load_texture_path :: proc(path: cstring) -> Texture_Index {
 	when BACKEND == .OPENGL {
 		width, height, channels: i32
 		image.set_flip_vertically_on_load(1)
@@ -88,7 +90,11 @@ load_texture_path :: proc(path: cstring) -> u32 {
 	}
 }
 
-load_texture_file :: proc(data: [^]u8, width, height: i32, format: Texture_Format) -> u32 {
+load_texture_file :: proc(
+	data: [^]u8,
+	width, height: i32,
+	format: Texture_Format,
+) -> Texture_Index {
 	index := get_next_free_index()
 	occupied[index] = true
 
@@ -105,7 +111,7 @@ load_texture_file :: proc(data: [^]u8, width, height: i32, format: Texture_Forma
 	return index
 }
 
-unload_texture :: proc(index: u32) {
+unload_texture :: proc(index: Texture_Index) {
 	when BACKEND == .OPENGL {
 		gl.unload_texture(&texture_ids[index])
 	} else when BACKEND == .WEBGL {
@@ -115,15 +121,15 @@ unload_texture :: proc(index: u32) {
 	occupied[index] = false
 }
 
-texture_id :: proc(index: u32) -> u32 {
+texture_id :: proc(index: Texture_Index) -> u32 {
 	return texture_ids[index]
 }
 
-texture_width :: proc(index: u32) -> f32 {
+texture_width :: proc(index: Texture_Index) -> f32 {
 	return f32(texture_widths[index])
 }
 
-texture_height :: proc(index: u32) -> f32 {
+texture_height :: proc(index: Texture_Index) -> f32 {
 	return f32(texture_heights[index])
 }
 
