@@ -4,6 +4,7 @@ import "input"
 import r "render"
 import "window"
 
+import "core:fmt"
 import "core:math"
 
 wall, tex2: r.Texture_Index
@@ -80,7 +81,18 @@ runtime_tests_update :: proc(dt: f32) {
 	// r.draw_rectangle(0, 200, r.BLUE)
 	// r.draw_circle(200, 50, 50)
 	// r.draw_texture(tex2, 500, {r.texture_width(tex2), r.texture_height(tex2)}, r.WHITE)
-	//
+
+	cell_count := (window.width / cell_size) * (window.height / cell_size)
+	r.draw_text(
+		fmt.aprintf(
+			"FPS: %v\nTriangle Count: %v",
+			(1 / dt),
+			cell_count * 2,
+			allocator = context.temp_allocator,
+		),
+		10,
+		r.WHITE,
+	)
 }
 
 text_single_line :: proc() {

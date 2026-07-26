@@ -10,7 +10,7 @@ tracking_allocator: mem.Tracking_Allocator
 arena: mem.Arena
 arena_buffer: [1024 * 1024]byte
 
-init :: proc() -> runtime.Context {
+init_default_context :: proc() -> runtime.Context {
 	context = runtime.default_context()
 	context.logger = log.create_console_logger(opt = {.Level, .Line, .Terminal_Color})
 
@@ -29,7 +29,7 @@ init :: proc() -> runtime.Context {
 	// Arena allocator
 	mem.arena_init(&arena, arena_buffer[:])
 	context.temp_allocator = mem.arena_allocator(&arena)
-	log.info("temp allocator (arena stack buffer) initialized")
+	log.info("[MAIN] temp allocator (arena stack buffer) initialized")
 
 	return context
 }

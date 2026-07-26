@@ -31,7 +31,7 @@ main :: proc() {
 
 @(export)
 web_init :: proc "c" () {
-	context = init()
+	context = init_default_context()
 	web_context = context
 
 	fmt.println("Fmt print")

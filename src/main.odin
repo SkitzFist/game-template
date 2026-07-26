@@ -9,12 +9,12 @@ import r "render"
 import "window"
 
 main :: proc() {
-	context = init()
+	context = init_default_context()
 
+	window.init()
 	input.init()
 
 	accepted_render_api_version := window.create(PROJECT_NAME, r.context_config())
-	defer (window.destroy())
 
 	r.attach_context(
 		i32(window.width),
@@ -22,7 +22,8 @@ main :: proc() {
 		accepted_render_api_version,
 		window.gl_set_proc_address,
 	)
-	window.set_framebuffer_resize_callback(r.on_frame_buffer_size_changed)
+	append(&window.resize_callbacks, r.on_frame_buffer_size_changed)
+
 	r.init()
 
 	wall = r.load_texture("assets/sprites/wall.jpg")
@@ -71,10 +72,13 @@ tick :: proc(dt: f32) {
 }
 
 shutdown :: proc() {
-	r.shutdown()
-
-
 	log.info("[MAIN] shutting down...")
+
+	r.shutdown()
+	log.info("[MAIN] Renderer shut down successfully")
+
+	window.shutdown()
+	log.info("[MAIN] Window shutdown successfully")
 
 	when MEM_TRACK {
 		reset_tracking_allocator(&tracking_allocator)

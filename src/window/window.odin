@@ -1,18 +1,30 @@
 package window
 
+import "core:log"
+
 import gfx "../gfx_context"
 import glfw "glfw"
 
+prev_width, prev_height: f32
 width, height: f32
 
-@(private)
-framebuffer_resize_callback: gfx.Framebuffer_Resize_Callback
+resize_callbacks: [dynamic]gfx.Framebuffer_Resize_Callback
+
+init :: proc() {
+	cache_line_fit := 64 / size_of(gfx.Framebuffer_Resize_Callback)
+	resize_callbacks = make(
+		[dynamic]gfx.Framebuffer_Resize_Callback,
+		0,
+		cache_line_fit,
+		context.allocator,
+	)
+}
 
 create :: proc(title: cstring, config: gfx.Config, fullscreen: bool = true) -> gfx.Version {
 	when gfx.PLATFORM == .DESKTOP {
-		version, success := glfw.create(title, config, fullscreen)
+		version, success := glfw.create(title, config, on_framebuffer_resized, fullscreen)
 		if !success {
-			panic("[WINDOW] could not create fullscreen")
+			panic("[WINDOW] could not create window")
 		}
 		w, h := glfw.get_size()
 		width, height = f32(w), f32(h)
@@ -24,25 +36,14 @@ create :: proc(title: cstring, config: gfx.Config, fullscreen: bool = true) -> g
 	panic("Platform not implemented")
 }
 
-destroy :: proc() {
+shutdown :: proc() {
 	when gfx.PLATFORM == .DESKTOP {
 		glfw.destroy()
-		return
 	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
-	panic("Platform not implemented")
-}
 
-set_framebuffer_resize_callback :: proc(callback: gfx.Framebuffer_Resize_Callback) {
-	when gfx.PLATFORM == .DESKTOP {
-		framebuffer_resize_callback = callback
-		glfw.set_framebuffer_resize_callback(on_framebuffer_resized)
-		return
-	} else when gfx.PLATFORM == .WEB {
-		// no impl yet
-	}
-	panic("Platform not implemented")
+	delete(resize_callbacks)
 }
 
 gl_set_proc_address :: proc(p: rawptr, name: cstring) {
@@ -128,9 +129,13 @@ get_size :: proc() -> (width, height: i32) {
 
 @(private)
 on_framebuffer_resized :: proc(w, h: i32) {
+	prev_width, prev_height = width, height
 	width, height = f32(w), f32(h)
-	if framebuffer_resize_callback != nil {
-		framebuffer_resize_callback(w, h)
+
+	log.infof("[WINDOW] resized from %vx%v to %vx%v", prev_width, prev_height, width, height)
+
+	for callback in resize_callbacks {
+		callback(width, height, prev_width, prev_height)
 	}
 }
 
