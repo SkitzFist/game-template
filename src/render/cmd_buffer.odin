@@ -2,6 +2,7 @@ package render
 
 import gl "opengl"
 
+import gfx "../gfx_context"
 import "../util"
 
 /*
@@ -64,16 +65,16 @@ draw_command_buffer :: proc() {
 
 		switch draw_cmd {
 		case .PRIMITIVE:
-			when BACKEND == .OPENGL {
+			when gfx.API == .OPENGL {
 				gl.draw_primitives(count)
 			}
 		case .TEXTURE:
-			when BACKEND == .OPENGL {
+			when gfx.API == .OPENGL {
 				texture_index := util.get_field(handle, TEXTURE_INDEX_FIELD, Texture_Index)
 				gl.draw_textures(texture_id(texture_index), count)
 			}
 		case .TEXT:
-			when BACKEND == .OPENGL {
+			when gfx.API == .OPENGL {
 				texture_index := util.get_field(handle, TEXTURE_INDEX_FIELD, Texture_Index)
 				gl.draw_text(texture_id(texture_index), count)
 			}
@@ -158,7 +159,7 @@ add_draw_command_texture :: proc(
 draw_triangle :: proc(p1, p2, p3: [2]f32, color: Color) {
 	add_draw_command_primitive(.PRIMITIVE, 1)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_triangle(p1, p2, p3, color)
 	}
 }
@@ -166,7 +167,7 @@ draw_triangle :: proc(p1, p2, p3: [2]f32, color: Color) {
 draw_rectangle :: proc(pos, size: [2]f32, color: Color, roundness: f32 = 0.0) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_rectangle(pos, size, color, roundness)
 	}
 }
@@ -174,7 +175,7 @@ draw_rectangle :: proc(pos, size: [2]f32, color: Color, roundness: f32 = 0.0) {
 draw_circle :: proc(pos: [2]f32, radius: f32, color: Color) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_circle(pos, radius, color)
 	}
 }
@@ -182,7 +183,7 @@ draw_circle :: proc(pos: [2]f32, radius: f32, color: Color) {
 draw_line_points :: proc(p1, p2: [2]f32, thickness: f32, color: Color, roundness: f32 = 0.0) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_line(p1, p2, thickness, color, roundness)
 	}
 }
@@ -195,7 +196,7 @@ draw_line_direction :: proc(
 ) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_line_direction(point, direction, length, thickness, color, roundness)
 	}
 }
@@ -210,7 +211,7 @@ draw_line :: proc {
 draw_texture_full :: proc(texture: Texture_Index, pos, size: [2]f32, color: Color) {
 	add_draw_command_texture(.TEXTURE, texture, 2)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_texture_full(pos, size, color)
 	}
 }
@@ -218,7 +219,7 @@ draw_texture_full :: proc(texture: Texture_Index, pos, size: [2]f32, color: Colo
 draw_texture_part :: proc(texture: Texture_Index, pos, size: [2]f32, src: [4]f32, color: Color) {
 	add_draw_command_texture(.TEXTURE, texture, 2)
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.add_texture_part(
 			pos,
 			size,
@@ -260,7 +261,7 @@ draw_text_impl :: proc(text: string, pos: [2]f32, color: Color, font_index: Font
 
 	draw_glyph :: proc(texture: Texture_Index, pos, size: [2]f32, src: [4]f32, color: Color) {
 		add_draw_command_texture(.TEXT, texture, 2)
-		when BACKEND == .OPENGL {
+		when gfx.API == .OPENGL {
 			gl.add_texture_part(
 				pos,
 				size,

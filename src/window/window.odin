@@ -1,8 +1,6 @@
 package window
 
 import gfx "../gfx_context"
-import "../platform"
-
 import glfw "glfw"
 
 width, height: f32
@@ -11,7 +9,7 @@ width, height: f32
 framebuffer_resize_callback: gfx.Framebuffer_Resize_Callback
 
 create_fullscreen :: proc(title: cstring, config: gfx.Config) {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		success := glfw.create_fullscreen(title, config)
 		if !success {
 			panic("[WINDOW] could not create fullscreen")
@@ -19,7 +17,7 @@ create_fullscreen :: proc(title: cstring, config: gfx.Config) {
 		w, h := glfw.get_size()
 		width, height = f32(w), f32(h)
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 
@@ -27,60 +25,60 @@ create_fullscreen :: proc(title: cstring, config: gfx.Config) {
 }
 
 destroy :: proc() {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		glfw.destroy()
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
 }
 
 set_framebuffer_resize_callback :: proc(callback: gfx.Framebuffer_Resize_Callback) {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		framebuffer_resize_callback = callback
 		glfw.set_framebuffer_resize_callback(on_framebuffer_resized)
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
 }
 
 gl_set_proc_address :: proc(p: rawptr, name: cstring) {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		glfw.gl_set_proc_address(p, name)
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
 }
 
 set_title :: proc(title: cstring) {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		glfw.set_title(title)
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
 }
 
 poll_events :: proc() {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		glfw.poll_events()
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
 }
 
 get_time :: proc() -> f64 {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		return glfw.get_time()
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 
@@ -88,9 +86,9 @@ get_time :: proc() -> f64 {
 }
 
 should_close :: proc() -> b32 {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		return glfw.should_close()
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 
@@ -98,10 +96,10 @@ should_close :: proc() -> b32 {
 }
 
 set_close :: proc(should_close: b32) {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		glfw.set_close(should_close)
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
@@ -109,19 +107,19 @@ set_close :: proc(should_close: b32) {
 
 // end of frame
 swap_buffer :: proc() {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		glfw.swap_buffer()
 		return
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 	panic("Platform not implemented")
 }
 
 get_size :: proc() -> (width, height: i32) {
-	when platform.PLATFORM == .DESKTOP {
+	when gfx.PLATFORM == .DESKTOP {
 		return glfw.get_size()
-	} else when platform.PLATFORM == .WEB {
+	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}
 

@@ -4,6 +4,8 @@ import "vendor:stb/image"
 
 import gl "opengl"
 
+import gfx "../gfx_context"
+
 //debug
 import "core:log"
 
@@ -71,7 +73,7 @@ load_texture :: proc {
 }
 
 load_texture_path :: proc(path: cstring) -> Texture_Index {
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		width, height, channels: i32
 		image.set_flip_vertically_on_load(1)
 		img_data := image.load(path, &width, &height, &channels, 0)
@@ -85,7 +87,7 @@ load_texture_path :: proc(path: cstring) -> Texture_Index {
 		log.info("Image loaded:", path, width, height, format)
 
 		return load_texture_file(img_data, width, height, format)
-	} else when BACKEND == .WEBGL {
+	} else when gfx.API == .WEBGL {
 		return 0
 	}
 }
@@ -98,9 +100,9 @@ load_texture_file :: proc(
 	index := get_next_free_index()
 	occupied[index] = true
 
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		texture_ids[index] = gl.load_texture(data, width, height, u32(format))
-	} else when BACKEND == .WEBGL {
+	} else when gfx.API == .WEBGL {
 		//not implemented yet
 	}
 
@@ -112,9 +114,9 @@ load_texture_file :: proc(
 }
 
 unload_texture :: proc(index: Texture_Index) {
-	when BACKEND == .OPENGL {
+	when gfx.API == .OPENGL {
 		gl.unload_texture(&texture_ids[index])
-	} else when BACKEND == .WEBGL {
+	} else when gfx.API == .WEBGL {
 		// no impl yet
 	}
 
