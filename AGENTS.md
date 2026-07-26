@@ -27,6 +27,7 @@ This repository is a learning project. The owner wants to come up with solutions
 - Web: `./build.sh web`.
 - `build.sh` builds and then calls `run.sh`.
 - Web runs through `python3 -m http.server` from `build/web` and opens `game.html`.
+- when checking compilation, refrain from using the build script. do 'odin check' cmd instead.
 
 ## Coding Guidance
 

@@ -13,14 +13,13 @@ window_handle: glfw.WindowHandle
 @(private)
 DEFAULT_CONTEXT: runtime.Context
 
-width, height: i32
-
 @(private)
-framebuffer_resize_callback: gfx.Framebuffer_Resize_Callback
+on_framebuffer_resized_callback: proc(width, height: i32)
 
 create :: proc(
 	title: cstring,
 	config: gfx.Config,
+	on_framebuffer_resized: proc(width, height: i32),
 	fullscreen: bool = true,
 ) -> (
 	version: gfx.Version,
@@ -29,10 +28,11 @@ create :: proc(
 	//store odin context so we can use it in proc "c" functions
 	DEFAULT_CONTEXT = context
 
+	on_framebuffer_resized_callback = on_framebuffer_resized
 	glfw.SetErrorCallback(error_callback)
 
-	if !bool(glfw.Init()) {
-		log.info("[WINDOW] GLFW Failed to init")
+	if !glfw.Init() {
+		log.info("[GLFW] Failed to init")
 		return {}, false
 	}
 
@@ -62,11 +62,11 @@ create :: proc(
 			break
 		}
 
-		log.infof("[WINDOW] failed creating window with version: %v", version)
+		log.infof("[GLFW] failed creating window with version: %v", version)
 	}
 
 	if window_handle == nil {
-		panic("[WINDOW] GLFW failed to create window handle")
+		panic("[GLFW] failed to create window handle")
 	}
 
 	if fullscreen {
@@ -93,15 +93,9 @@ create :: proc(
 	glfw.SetScrollCallback(window_handle, mouse_scroll_callback)
 	glfw.SetFramebufferSizeCallback(window_handle, frame_buffer_size_callback)
 
-	width, height = glfw.GetFramebufferSize(window_handle)
-
-	log.info("[WINDOW] created with version:", accepted_version)
+	log.info("[GLFW] created window with version:", accepted_version)
 
 	return accepted_version, true
-}
-
-set_framebuffer_resize_callback :: proc(callback: gfx.Framebuffer_Resize_Callback) {
-	framebuffer_resize_callback = callback
 }
 
 gl_set_proc_address :: proc(p: rawptr, name: cstring) {
@@ -115,7 +109,7 @@ set_title :: proc(title: cstring) {
 destroy :: proc() {
 	glfw.DestroyWindow(window_handle)
 	glfw.Terminate()
-	log.info("[WINDOW] destroyed")
+	log.info("[GLFW] destroyed & Terminated")
 }
 
 poll_events :: proc() {
@@ -143,13 +137,13 @@ get_size :: proc() -> (width, height: i32) {
 }
 
 print_frame_size :: proc() {
-	log.info("[WINDOW] Frame size:", glfw.GetWindowFrameSize(window_handle))
+	log.info("[GLFW] Frame size:", glfw.GetWindowFrameSize(window_handle))
 }
 
 @(private)
 error_callback: glfw.ErrorProc = proc "c" (error: i32, description: cstring) {
 	context = DEFAULT_CONTEXT
-	log.error("[WINDOW] error:", description)
+	log.error("[GLFW] error:", description)
 }
 
 // ---- KEYBOARD
@@ -202,7 +196,7 @@ mouse_button_callback: glfw.MouseButtonProc : proc "c" (
 	// fmt.println("button:", button, "action:", action, "mods:", mods)
 
 	if button < 0 || button >= len(input.Mouse_Button) {
-		panic("Unsupported button")
+		panic("[GLFW] Unsupported button")
 	}
 
 	switch action {
@@ -220,20 +214,18 @@ mouse_scroll_callback: glfw.ScrollProc : proc "c" (
 	xOffset, yOffset: f64,
 ) {
 	context = DEFAULT_CONTEXT
-	log.info("[Window](mouse_scroll_callback): xOffset:", xOffset, ", yOffset:", yOffset)
+	log.info("[GLFW](mouse_scroll_callback): xOffset:", xOffset, ", yOffset:", yOffset)
 }
 
 @(private)
 frame_buffer_size_callback: glfw.FramebufferSizeProc : proc "c" (
 	window: glfw.WindowHandle,
-	w, h: i32,
+	width, height: i32,
 ) {
 	context = DEFAULT_CONTEXT
 
-	log.info("frame buffer size changed:", width, ",", height)
-	width, height = w, h
-	if framebuffer_resize_callback != nil {
-		framebuffer_resize_callback(width, height)
-	}
+	log.infof("[GLFW] frame buffer size changed: %vx%v", width, height)
+
+	on_framebuffer_resized_callback(width, height)
 }
 

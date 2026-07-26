@@ -33,7 +33,7 @@ Config :: struct {
 	samples:            i32,
 }
 
-Framebuffer_Resize_Callback :: #type proc(width, height: i32)
+Framebuffer_Resize_Callback :: #type proc(width, height, prev_width, prev_height: f32)
 
 Set_Proc_Address :: #type proc(p: rawptr, name: cstring)
 

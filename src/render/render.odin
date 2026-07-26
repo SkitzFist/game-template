@@ -36,9 +36,11 @@ init :: proc() {
 	cmd_buffer_init()
 }
 
-on_frame_buffer_size_changed :: proc(width, height: i32) {
+on_frame_buffer_size_changed: gfx.Framebuffer_Resize_Callback : proc(
+	width, height, prev_width, prev_height: f32,
+) {
 	when gfx.API == .OPENGL {
-		gl.on_frame_buffer_size_changed(width, height)
+		gl.on_frame_buffer_size_changed(i32(width), i32(height))
 	} else when gfx.API == .WEBGL {
 		//no impl yet
 	}
