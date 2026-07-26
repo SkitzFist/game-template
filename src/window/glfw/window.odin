@@ -18,7 +18,14 @@ width, height: i32
 @(private)
 framebuffer_resize_callback: gfx.Framebuffer_Resize_Callback
 
-create_fullscreen :: proc(title: cstring, config: gfx.Config) -> (success: bool) {
+create :: proc(
+	title: cstring,
+	config: gfx.Config,
+	fullscreen: bool = true,
+) -> (
+	version: gfx.Version,
+	success: bool,
+) {
 	//store odin context so we can use it in proc "c" functions
 	DEFAULT_CONTEXT = context
 
@@ -26,10 +33,8 @@ create_fullscreen :: proc(title: cstring, config: gfx.Config) -> (success: bool)
 
 	if !bool(glfw.Init()) {
 		log.info("[WINDOW] GLFW Failed to init")
-		return false
+		return {}, false
 	}
-
-	apply_context_config(config)
 
 	monitor := glfw.GetPrimaryMonitor()
 	mode := glfw.GetVideoMode(monitor)
@@ -38,10 +43,44 @@ create_fullscreen :: proc(title: cstring, config: gfx.Config) -> (success: bool)
 	glfw.WindowHint(glfw.BLUE_BITS, mode.blue_bits)
 	glfw.WindowHint(glfw.REFRESH_RATE, mode.refresh_rate)
 
-	window_handle = glfw.CreateWindow(mode.width, mode.height, title, monitor, nil)
+	if config.samples > 0 {
+		glfw.WindowHint(glfw.SAMPLES, config.samples)
+	}
+
+	// REMINDER: this needs to change when vulkan support is added
+	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+
+	window_handle = nil
+	accepted_version: gfx.Version = {0, 0}
+	for version in config.supported_versions {
+		glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, i32(version.major))
+		glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, i32(version.minor))
+		window_handle = glfw.CreateWindow(mode.width, mode.height, title, nil, nil)
+
+		if window_handle != nil {
+			accepted_version = version
+			break
+		}
+
+		log.infof("[WINDOW] failed creating window with version: %v", version)
+	}
+
 	if window_handle == nil {
-		log.info("[WINDOW] GLFW failed to create window handle")
-		return false
+		panic("[WINDOW] GLFW failed to create window handle")
+	}
+
+	if fullscreen {
+		glfw.SetWindowMonitor(
+			window_handle,
+			monitor,
+			0,
+			0,
+			mode.width,
+			mode.height,
+			mode.refresh_rate,
+		)
+	} else {
+		glfw.SetWindowMonitor(window_handle, nil, 0, 0, 1280, 720, mode.refresh_rate)
 	}
 
 	glfw.MakeContextCurrent(window_handle)
@@ -56,9 +95,9 @@ create_fullscreen :: proc(title: cstring, config: gfx.Config) -> (success: bool)
 
 	width, height = glfw.GetFramebufferSize(window_handle)
 
-	log.info("[WINDOW] created")
+	log.info("[WINDOW] created with version:", accepted_version)
 
-	return true
+	return accepted_version, true
 }
 
 set_framebuffer_resize_callback :: proc(callback: gfx.Framebuffer_Resize_Callback) {
@@ -101,25 +140,6 @@ swap_buffer :: proc() {
 
 get_size :: proc() -> (width, height: i32) {
 	return width, height
-}
-
-@(private)
-apply_context_config :: proc(config: gfx.Config) {
-	switch config.api {
-	case .OPENGL:
-		glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, config.major_version)
-		glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, config.minor_version)
-
-		if config.profile == .CORE {
-			glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-		}
-	case .WEBGL:
-	//no impl yet
-	}
-
-	if config.samples > 0 {
-		glfw.WindowHint(glfw.SAMPLES, config.samples)
-	}
 }
 
 print_frame_size :: proc() {

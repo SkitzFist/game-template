@@ -1,6 +1,6 @@
-#version 420 core
+#version 330 core
 
-layout(std140, binding = 0) uniform GlobalData {
+layout(std140) uniform GlobalData {
     float time;
 };
 

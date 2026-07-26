@@ -88,6 +88,7 @@ gpu_data_upload :: proc() {
 		is_dirty = false
 	}
 
+	// Upload global shader data
 	gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
 	gl.BufferSubData(gl.UNIFORM_BUFFER, 0, size_of(f32), &TIME)
 

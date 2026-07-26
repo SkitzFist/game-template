@@ -1,15 +1,12 @@
 #+build linux, windows
 package opengl
 
-import "../../gfx_context"
+import gfx "../../gfx_context"
 import "core:log"
 import gl "vendor:OpenGL"
 
 @(private)
 TAG :: "[OPENGL]"
-
-GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 2
 
 @(private)
 render_width, render_height: i32
@@ -17,19 +14,25 @@ render_width, render_height: i32
 @(private)
 TIME: f32
 
+@(private = "file")
+SUPPORTED_VERSIONS: []gfx.Version = {{4, 6}, {4, 3}, {4, 1}, {3, 3}}
+
 // ---- WINDOW ---- //
-context_config :: proc() -> gfx_context.Config {
+context_config :: proc() -> gfx.Config {
 	return {
 		api = .OPENGL,
-		major_version = GL_MAJOR_VERSION,
-		minor_version = GL_MINOR_VERSION,
+		supported_versions = SUPPORTED_VERSIONS[:],
 		profile = .CORE,
 		samples = 8,
 	}
 }
 
-attach_context :: proc(width, height: i32, set_proc_address: gfx_context.Set_Proc_Address) {
-	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, set_proc_address)
+attach_context :: proc(
+	width, height: i32,
+	version: gfx.Version,
+	set_proc_address: gfx.Set_Proc_Address,
+) {
+	gl.load_up_to(version.major, version.minor, set_proc_address)
 
 	render_width = width
 	render_height = height
