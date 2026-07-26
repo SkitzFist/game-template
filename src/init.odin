@@ -4,7 +4,7 @@ import "base:runtime"
 import "core:log"
 import "core:mem"
 
-import r "render"
+import gfx "gfx_context"
 
 tracking_allocator: mem.Tracking_Allocator
 arena: mem.Arena
@@ -15,7 +15,7 @@ init :: proc() -> runtime.Context {
 	context.logger = log.create_console_logger(opt = {.Level, .Line, .Terminal_Color})
 
 	log.info("[MAIN] Init:", ODIN_OS, ODIN_ARCH)
-	log.info("[MAIN] Render backend:", r.BACKEND)
+	log.info("[MAIN] Render backend:", gfx.API)
 
 	// Mem Tracker
 	when MEM_TRACK {

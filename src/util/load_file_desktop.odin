@@ -1,5 +1,5 @@
 #+build linux, windows
-package platform
+package util
 
 import "core:fmt"
 import "core:mem"

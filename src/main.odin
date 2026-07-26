@@ -8,9 +8,6 @@ import "input"
 import r "render"
 import "window"
 
-//debug
-import "core:fmt"
-
 main :: proc() {
 	context = init()
 
@@ -42,7 +39,7 @@ main :: proc() {
 
 
 tick :: proc(dt: f32) {
-	fmt.println("Fps:", 1 / dt)
+	// fmt.println("Fps:", 1 / dt)
 	frame += 1
 	// run input systems
 	if input.is_pressed(input.Key.ESCAPE) {

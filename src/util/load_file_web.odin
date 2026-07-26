@@ -1,5 +1,5 @@
 #+build js wasm32
-package platform
+package util
 
 import "core:mem"
 

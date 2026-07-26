@@ -6,7 +6,7 @@ import "core:fmt"
 import "core:math"
 import "core:strings"
 
-import "../platform"
+import "../util"
 
 /*
 	| texture_index | baked_chars
@@ -23,7 +23,6 @@ NUM_CHAR: i32 : 96
 baked_chars: [MAX_FONTS][NUM_CHAR]tt.bakedchar
 
 START_CHAR: i32 : 32
-
 
 @(private = "file")
 occupied: [MAX_FONTS]bool
@@ -42,7 +41,7 @@ get_next_free_index :: proc() -> Font_Index {
 load_font :: proc(path: string) -> Font_Index {
 	font_index := get_next_free_index()
 
-	font_data := platform.load_file(path, context.temp_allocator)
+	font_data := util.load_file(path, context.temp_allocator)
 
 	atlas_size: i32 = 512
 	bitmap := make([]u8, atlas_size * atlas_size)

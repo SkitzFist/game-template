@@ -7,9 +7,6 @@ import "vendor:glfw"
 import gfx "../../gfx_context"
 import "../../input"
 
-//debug
-import "core:fmt"
-
 @(private)
 window_handle: glfw.WindowHandle
 
