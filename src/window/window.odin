@@ -8,15 +8,15 @@ width, height: f32
 @(private)
 framebuffer_resize_callback: gfx.Framebuffer_Resize_Callback
 
-create_fullscreen :: proc(title: cstring, config: gfx.Config) {
+create :: proc(title: cstring, config: gfx.Config, fullscreen: bool = true) -> gfx.Version {
 	when gfx.PLATFORM == .DESKTOP {
-		success := glfw.create_fullscreen(title, config)
+		version, success := glfw.create(title, config, fullscreen)
 		if !success {
 			panic("[WINDOW] could not create fullscreen")
 		}
 		w, h := glfw.get_size()
 		width, height = f32(w), f32(h)
-		return
+		return version
 	} else when gfx.PLATFORM == .WEB {
 		// no impl yet
 	}

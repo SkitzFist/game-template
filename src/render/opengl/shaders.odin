@@ -35,6 +35,11 @@ create_shader_u8 :: proc(vert: []u8, frag: []u8) -> u32 {
 		panic("Failed to link shader")
 	}
 
+	globals := gl.GetUniformBlockIndex(program, "GlobalData")
+	if globals != gl.INVALID_INDEX {
+		gl.UniformBlockBinding(program, globals, 0)
+	}
+
 	return program
 }
 
@@ -51,4 +56,3 @@ compile_shader :: proc(shader: u32, src: [^]cstring, size: i32) {
 		log.error(TAG, "Failed compiling shader:", string(ERROR_BUFFER[:LENGTH]))
 	}
 }
-

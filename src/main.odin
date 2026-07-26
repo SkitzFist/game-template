@@ -13,10 +13,15 @@ main :: proc() {
 
 	input.init()
 
-	window.create_fullscreen(PROJECT_NAME, r.context_config())
+	accepted_render_api_version := window.create(PROJECT_NAME, r.context_config())
 	defer (window.destroy())
 
-	r.attach_context(i32(window.width), i32(window.height), window.gl_set_proc_address)
+	r.attach_context(
+		i32(window.width),
+		i32(window.height),
+		accepted_render_api_version,
+		window.gl_set_proc_address,
+	)
 	window.set_framebuffer_resize_callback(r.on_frame_buffer_size_changed)
 	r.init()
 

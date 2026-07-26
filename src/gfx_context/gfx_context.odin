@@ -22,12 +22,15 @@ Profile :: enum {
 	CORE,
 }
 
+Version :: struct {
+	major, minor: int,
+}
+
 Config :: struct {
-	api:           Api,
-	major_version: i32,
-	minor_version: i32,
-	profile:       Profile,
-	samples:       i32,
+	api:                Api,
+	supported_versions: []Version,
+	profile:            Profile,
+	samples:            i32,
 }
 
 Framebuffer_Resize_Callback :: #type proc(width, height: i32)
