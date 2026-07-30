@@ -2,9 +2,48 @@ package util
 
 import "base:intrinsics"
 
+Handle_Data :: struct(
+	$T: typeid,
+	$E: typeid,
+) where intrinsics.type_is_unsigned(T) &&
+	intrinsics.type_is_enum(E)
+{
+	fields: [E]Bit_Field(T),
+}
+
 Bit_Field :: struct($T: typeid) where intrinsics.type_is_unsigned(T) {
 	bits:  T,
 	shift: T,
+}
+
+create_handle_data :: proc "contextless" (
+	$T: typeid,
+	field_bits: [$E]T,
+) -> Handle_Data(T, E) where intrinsics.type_is_unsigned(T) &&
+	intrinsics.type_is_enum(E) {
+
+	data: Handle_Data(T, E)
+	total_bits: T = 0
+	shift: T
+
+	for field_type in E {
+		bits := field_bits[field_type]
+		data.fields[field_type] = {
+			bits  = bits,
+			shift = shift,
+		}
+
+		total_bits += bits
+		shift += bits
+	}
+
+	if total_bits > T(size_of(T) * 8) {
+		panic_contextless(
+			"[UTIL] failed creating handle data: sum of bits is larger then handle type",
+		)
+	}
+
+	return data
 }
 
 @(private = "file")
