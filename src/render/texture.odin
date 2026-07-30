@@ -2,9 +2,8 @@ package render
 
 import "vendor:stb/image"
 
-import gl "opengl"
-
 import gfx "../gfx_context"
+import gl "opengl"
 
 //debug
 import "core:log"

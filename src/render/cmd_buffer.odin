@@ -6,33 +6,42 @@ import gfx "../gfx_context"
 import "../util"
 
 /*
-	primitive handle:
-	| draw_cmd | count_index |
-
-	texture handle:
-	| draw_cmd | count_index | texture_id |
+	NOTE: All cmd buffer handles must implement cmd type at first bit shift
 */
 
 @(private = "file")
 Handle :: u64
 
 @(private = "file")
-DRAW_CMD_FIELD: util.Bit_Field(Handle) : {
-	bits  = 8, // cmd enum is u8
+Count :: u32
+
+CMD_BIT_FIELD: util.Bit_Field(Handle) = {
+	bits  = Handle(size_of(Draw_Command) * 8),
 	shift = 0,
 }
 
-@(private = "file")
-Count :: u32
-COUNT_FIELD: util.Bit_Field(Handle) : {
-	bits = size_of(Count) * 8,
-	shift = DRAW_CMD_FIELD.shift + DRAW_CMD_FIELD.bits,
+Primitive_Handle_Field :: enum u8 {
+	CMD,
+	COUNT,
 }
+primitive_handle := util.create_handle_data(
+	Handle,
+	[Primitive_Handle_Field]Handle{.CMD = CMD_BIT_FIELD.bits, .COUNT = Handle(size_of(Count) * 8)},
+)
 
-TEXTURE_INDEX_FIELD: util.Bit_Field(Handle) : {
-	bits = size_of(Texture_Index) * 8,
-	shift = COUNT_FIELD.shift + COUNT_FIELD.bits,
+Texture_Handle_Field :: enum u8 {
+	CMD,
+	COUNT,
+	TEXTURE_INDEX,
 }
+texture_handle := util.create_handle_data(
+	Handle,
+	[Texture_Handle_Field]Handle {
+		.CMD = CMD_BIT_FIELD.bits,
+		.COUNT = size_of(Count) * 8,
+		.TEXTURE_INDEX = size_of(Texture_Index) * 8,
+	},
+)
 
 Draw_Command :: enum u8 {
 	PRIMITIVE,
@@ -44,12 +53,9 @@ Draw_Command :: enum u8 {
 draw_commands: [dynamic]Handle
 
 cmd_buffer_init :: proc() {
-	assert(
-		DRAW_CMD_FIELD.bits + COUNT_FIELD.bits + TEXTURE_INDEX_FIELD.bits <= (size_of(Handle) * 8),
-		"[CMD_BUFFER] Bit Fields are larger then Handle",
-	)
-
-	draw_commands = make([dynamic]Handle, 0, 100)
+	//init at one cache line
+	cache_line_fit := 64 / size_of(Handle)
+	draw_commands = make([dynamic]Handle, 0, cache_line_fit)
 }
 
 cmd_buffer_shutdown :: proc() {
@@ -58,24 +64,34 @@ cmd_buffer_shutdown :: proc() {
 
 draw_command_buffer :: proc() {
 	draw_cmd: Draw_Command
-	count: u32
+
 	for handle in draw_commands {
-		draw_cmd = util.get_field(handle, DRAW_CMD_FIELD, Draw_Command)
-		count = util.get_field(handle, COUNT_FIELD, u32)
+		draw_cmd = util.get_field(handle, CMD_BIT_FIELD, Draw_Command)
 
 		switch draw_cmd {
 		case .PRIMITIVE:
+			count := util.get_field(handle, primitive_handle.fields[.COUNT], Count)
 			when gfx.API == .OPENGL {
 				gl.draw_primitives(count)
 			}
 		case .TEXTURE:
+			texture_index := util.get_field(
+				handle,
+				texture_handle.fields[.TEXTURE_INDEX],
+				Texture_Index,
+			)
+			count := util.get_field(handle, texture_handle.fields[.COUNT], Count)
 			when gfx.API == .OPENGL {
-				texture_index := util.get_field(handle, TEXTURE_INDEX_FIELD, Texture_Index)
 				gl.draw_textures(texture_id(texture_index), count)
 			}
 		case .TEXT:
+			texture_index := util.get_field(
+				handle,
+				texture_handle.fields[.TEXTURE_INDEX],
+				Texture_Index,
+			)
+			count := util.get_field(handle, texture_handle.fields[.COUNT], Count)
 			when gfx.API == .OPENGL {
-				texture_index := util.get_field(handle, TEXTURE_INDEX_FIELD, Texture_Index)
 				gl.draw_text(texture_id(texture_index), count)
 			}
 		}
@@ -86,18 +102,22 @@ draw_command_buffer :: proc() {
 }
 
 @(private = "file")
-increment_count :: proc(last_index: int, triangle_count: Count) {
+increment_count :: proc(
+	last_index: int,
+	count_field: util.Bit_Field(Handle),
+	triangle_count: Count,
+) {
 	handle := draw_commands[last_index]
-	prev_count := util.get_field(handle, COUNT_FIELD, Count)
-	draw_commands[last_index] = util.set_field(handle, COUNT_FIELD, prev_count + triangle_count)
+	prev_count := util.get_field(handle, count_field, Count)
+	draw_commands[last_index] = util.set_field(handle, count_field, prev_count + triangle_count)
 }
 
 @(private = "file")
 add_draw_command_primitive :: proc(cmd: Draw_Command, triangle_count: u32) {
 
 	append_new :: proc(cmd: Draw_Command, triangle_count: u32) {
-		handle: Handle = util.set_field(Handle{}, DRAW_CMD_FIELD, cmd)
-		handle = util.set_field(handle, COUNT_FIELD, triangle_count)
+		handle: Handle = util.set_field(Handle{}, primitive_handle.fields[.CMD], cmd)
+		handle = util.set_field(handle, primitive_handle.fields[.COUNT], triangle_count)
 
 		append(&draw_commands, handle)
 	}
@@ -111,10 +131,10 @@ add_draw_command_primitive :: proc(cmd: Draw_Command, triangle_count: u32) {
 	}
 
 	handle := draw_commands[last_index]
-	prev_cmd := util.get_field(handle, DRAW_CMD_FIELD, Draw_Command)
+	prev_cmd := util.get_field(handle, primitive_handle.fields[.CMD], Draw_Command)
 
 	if prev_cmd == cmd {
-		increment_count(last_index, triangle_count)
+		increment_count(last_index, primitive_handle.fields[.COUNT], triangle_count)
 	} else {
 		append_new(cmd, triangle_count)
 	}
@@ -129,9 +149,9 @@ add_draw_command_texture :: proc(
 ) {
 
 	append_new :: proc(cmd: Draw_Command, texture_index: Texture_Index, triangle_count: Count) {
-		handle: Handle = util.set_field(Handle{}, DRAW_CMD_FIELD, cmd)
-		handle = util.set_field(handle, COUNT_FIELD, triangle_count)
-		handle = util.set_field(handle, TEXTURE_INDEX_FIELD, texture_index)
+		handle: Handle = util.set_field(Handle{}, texture_handle.fields[.CMD], cmd)
+		handle = util.set_field(handle, texture_handle.fields[.COUNT], triangle_count)
+		handle = util.set_field(handle, texture_handle.fields[.TEXTURE_INDEX], texture_index)
 
 		append(&draw_commands, handle)
 	}
@@ -144,13 +164,17 @@ add_draw_command_texture :: proc(
 	}
 
 	prev_handle := draw_commands[prev_index]
-	prev_cmd := util.get_field(prev_handle, DRAW_CMD_FIELD, Draw_Command)
-	prev_texture_index := util.get_field(prev_handle, TEXTURE_INDEX_FIELD, Texture_Index)
+	prev_cmd := util.get_field(prev_handle, texture_handle.fields[.CMD], Draw_Command)
+	prev_texture_index := util.get_field(
+		prev_handle,
+		texture_handle.fields[.TEXTURE_INDEX],
+		Texture_Index,
+	)
 
 	only_increase_count := prev_cmd == cmd && prev_texture_index == texture_index
 
 	if only_increase_count {
-		increment_count(prev_index, triangle_count)
+		increment_count(prev_index, texture_handle.fields[.COUNT], triangle_count)
 	} else {
 		append_new(cmd, texture_index, triangle_count)
 	}
