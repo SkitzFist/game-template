@@ -6,6 +6,7 @@ import "window"
 
 import "core:fmt"
 import "core:math"
+import "core:math/rand"
 
 wall, tex2: r.Texture_Index
 motion: bool
@@ -24,9 +25,16 @@ Test :: enum {
 	TEXTURE_PART,
 	TEXT_SINGLE_LINE,
 	TEXT_MULTI_LINE,
+	TEXT_RANDOM_FULL,
 }
 
-test: Test = .TEXT_MULTI_LINE
+test: Test = .TEXT_RANDOM_FULL
+
+text := "Lorem ipsum dolor sit amet consectetur adipiscing elit.\n Quisque faucibus ex sapien vitae pellentesque sem placerat.\n In id cursus mi pretium tellus duis convallis.\n Tempus leo eu aenean sed diam urna tempor.\n Pulvinar vivamus fringilla lacus nec metus bibendum egestas.\n Iaculis massa nisl malesuada lacinia integer nunc posuere.\n Ut hendrerit semper vel class aptent taciti sociosqu.\n Ad litora torquent per conubia nostra inceptos himenaeos.\n"
+
+random_pos :: proc() -> [2]f32 {
+	return {rand.float32_range(0, window.width), rand.float32_range(0, window.height)}
+}
 
 runtime_tests_update :: proc(dt: f32) {
 
@@ -76,6 +84,8 @@ runtime_tests_update :: proc(dt: f32) {
 		text_single_line()
 	case .TEXT_MULTI_LINE:
 		text_multi_line()
+	case .TEXT_RANDOM_FULL:
+		text_random_full()
 	}
 
 	// r.draw_rectangle(0, 200, r.BLUE)
@@ -129,6 +139,19 @@ text_multi_line :: proc() {
 	text_height := r.text_height(r.FONT_DEFAULT, text)
 	r.draw_line_direction(pos + {0, text_height + 10}, {90, 0}, text_width, 3.0, r.BLUE)
 	r.draw_line_direction(pos - {10, 0}, {0, 90}, text_height, 3.0, r.BLUE)
+}
+
+text_random_full :: proc() {
+	TEXT_COUNT :: 10_000
+	MAX_LENGTH :: 25
+
+	for i in 0 ..< TEXT_COUNT {
+		length := i % MAX_LENGTH
+		start := i % (len(text) - length)
+
+		str := text[start:start + length]
+		r.draw_text(str, random_pos(), r.WHITE)
+	}
 }
 
 single_texture :: proc() {
