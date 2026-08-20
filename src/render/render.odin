@@ -30,8 +30,7 @@ init :: proc() {
 		//no impl yet
 	}
 
-	//debug
-	load_font("assets/fonts/roboto.ttf")
+	font_init()
 
 	cmd_buffer_init()
 }
@@ -47,13 +46,14 @@ on_frame_buffer_size_changed: gfx.Framebuffer_Resize_Callback : proc(
 }
 
 shutdown :: proc() {
+	cmd_buffer_shutdown()
+	font_shutdown()
+
 	when gfx.API == .OPENGL {
 		gl.shutdown()
 	} else when gfx.API == .WEBGL {
 		//no impl yet
 	}
-
-	cmd_buffer_shutdown()
 }
 
 // ---- FRAME ----
@@ -72,6 +72,7 @@ draw_end :: proc() {
 	} else when gfx.API == .WEBGL {
 		//no impl yet
 	}
+
 	draw_command_buffer()
 }
 

@@ -2,6 +2,8 @@ package render
 
 import gl "opengl"
 
+import "core:log"
+
 import gfx "../gfx_context"
 import "../util"
 
@@ -262,7 +264,17 @@ draw_texture :: proc {
 
 // ---- TEXT ----
 
-draw_text :: proc(text: string, pos: [2]f32, color: Color, font_index: Font_Index = 0) {
+draw_text :: proc(
+	text: string,
+	pos: [2]f32,
+	color: Color,
+	font_handle: Font_Handle = FONT_DEFAULT,
+) {
+	if !font_is_handle_valid(font_handle) {
+		log.error("Font handle is not valid")
+		return
+	}
+
 	is_multi_line, indexes := text_is_multiline(text)
 
 	if is_multi_line {
@@ -270,19 +282,23 @@ draw_text :: proc(text: string, pos: [2]f32, color: Color, font_index: Font_Inde
 		y := pos.y
 
 		for &line in lines {
-			draw_text_impl(line, {pos.x, y}, color, font_index)
-			y += text_height(font_index, line)
+			draw_text_impl(line, {pos.x, y}, color, font_handle)
+			y += text_height(font_handle, line)
 		}
 
 	} else {
-		draw_text_impl(text, pos, color, font_index)
+		draw_text_impl(text, pos, color, font_handle)
 	}
 }
 
 
 @(private = "file")
-draw_text_impl :: proc(text: string, pos: [2]f32, color: Color, font_index: Font_Index = 0) {
-
+draw_text_impl :: proc(
+	text: string,
+	pos: [2]f32,
+	color: Color,
+	font_handle: Font_Handle = FONT_DEFAULT,
+) {
 	draw_glyph :: proc(texture: Texture_Index, pos, size: [2]f32, src: [4]f32, color: Color) {
 		add_draw_command_texture(.TEXT, texture, 2)
 		when gfx.API == .OPENGL {
@@ -296,8 +312,9 @@ draw_text_impl :: proc(text: string, pos: [2]f32, color: Color, font_index: Font
 		}
 	}
 
-	texture := font_get_texture(font_index)
-	atlas_height := atlas_heights[font_index]
+	texture := font_get_texture(font_handle)
+	atlas_height := font_get_atlas_height(font_handle)
+	font_index := font_get_index(font_handle)
 
 	min_yoff: f32 = 0
 	for r in text {
