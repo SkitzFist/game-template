@@ -93,15 +93,22 @@ runtime_tests_update :: proc(dt: f32) {
 	// r.draw_texture(tex2, 500, {r.texture_width(tex2), r.texture_height(tex2)}, r.WHITE)
 
 	cell_count := (window.width / cell_size) * (window.height / cell_size)
+	text := fmt.aprintf(
+		"FPS: %v\nTriangle Count: %v",
+		(1 / dt),
+		cell_count * 2,
+		allocator = context.temp_allocator,
+	)
+
+	text_width := r.text_width(r.DEFAULT_FONT, text)
+	text_height := r.text_height(r.DEFAULT_FONT, text)
+	frame_size: [2]f32 = {text_width * 1.15, text_height * 1.3}
+
+	r.draw_rectangle(0, frame_size, r.GRAY - {0, 0, 0, 100})
+
 	r.draw_text(
-		fmt.aprintf(
-			"FPS: %v\nTriangle Count: %v",
-			(1 / dt),
-			cell_count * 2,
-			allocator = context.temp_allocator,
-		),
-		10,
-		r.WHITE,
+		text,
+		{(frame_size.x / 2) - (text_width / 2), (frame_size.y / 2) - (text_height / 2)},
 	)
 }
 
@@ -112,9 +119,19 @@ text_single_line :: proc() {
 	}
 	text: string = string(ascii[:])
 	pos: [2]f32 = {200, 200}
-	r.draw_text(text, pos, r.WHITE)
-	text_width := r.text_width(r.FONT_DEFAULT, text)
-	text_height := r.text_height(r.FONT_DEFAULT, text)
+
+	font_size: f32 = f32(r.DEFAULT_FONT_SIZE * math.sin(window.get_time()) + r.DEFAULT_FONT_SIZE)
+
+	font_style: r.Font_Style = {
+		size  = font_size,
+		color = r.WHITE,
+	}
+
+	r.draw_text(text, pos, font_style)
+
+	text_width := r.text_width(r.DEFAULT_FONT, text, font_style)
+	text_height := r.text_height(r.DEFAULT_FONT, text, font_style)
+
 	r.draw_line_direction(pos + {0, text_height + 10}, {90, 0}, text_width, 3.0, r.BLUE)
 	r.draw_line_direction(pos - {10, 0}, {0, 90}, text_height, 3.0, r.BLUE)
 }
@@ -133,10 +150,17 @@ text_multi_line :: proc() {
 
 	text: string = string(ascii[:])
 	pos: [2]f32 = {200, 200}
+	font_size: f32 = f32(r.DEFAULT_FONT_SIZE * math.sin(window.get_time()) + r.DEFAULT_FONT_SIZE)
 
-	r.draw_text(text, pos, r.WHITE)
-	text_width := r.text_width(r.FONT_DEFAULT, text)
-	text_height := r.text_height(r.FONT_DEFAULT, text)
+	font_style: r.Font_Style = {
+		size  = font_size,
+		color = r.WHITE,
+	}
+
+	r.draw_text(text, pos, font_style)
+	text_width := r.text_width(r.DEFAULT_FONT, text, font_style)
+	text_height := r.text_height(r.DEFAULT_FONT, text, font_style)
+
 	r.draw_line_direction(pos + {0, text_height + 10}, {90, 0}, text_width, 3.0, r.BLUE)
 	r.draw_line_direction(pos - {10, 0}, {0, 90}, text_height, 3.0, r.BLUE)
 }
@@ -150,7 +174,7 @@ text_random_full :: proc() {
 		start := i % (len(text) - length)
 
 		str := text[start:start + length]
-		r.draw_text(str, random_pos(), r.WHITE)
+		r.draw_text(str, random_pos())
 	}
 }
 
