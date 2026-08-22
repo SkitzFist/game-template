@@ -267,10 +267,14 @@ draw_texture :: proc {
 draw_text :: proc(
 	text: string,
 	pos: [2]f32,
-	color: Color,
-	font_handle: Font_Handle = FONT_DEFAULT,
+	style: Font_Style = DEFAULT_FONT_STYLE,
+	handle: Font_Handle = DEFAULT_FONT,
 ) {
-	if !font_is_handle_valid(font_handle) {
+	if style.size <= 0 {
+		return
+	}
+
+	if !font_is_handle_valid(handle) {
 		log.error("Font handle is not valid")
 		return
 	}
@@ -282,12 +286,12 @@ draw_text :: proc(
 		y := pos.y
 
 		for &line in lines {
-			draw_text_impl(line, {pos.x, y}, color, font_handle)
-			y += text_height(font_handle, line)
+			draw_text_impl(line, {pos.x, y}, style.color, style, handle)
+			y += text_height(handle, line, style)
 		}
 
 	} else {
-		draw_text_impl(text, pos, color, font_handle)
+		draw_text_impl(text, pos, style.color, style, handle)
 	}
 }
 
@@ -297,7 +301,8 @@ draw_text_impl :: proc(
 	text: string,
 	pos: [2]f32,
 	color: Color,
-	font_handle: Font_Handle = FONT_DEFAULT,
+	style: Font_Style = DEFAULT_FONT_STYLE,
+	handle: Font_Handle = DEFAULT_FONT,
 ) {
 	draw_glyph :: proc(texture: Texture_Index, pos, size: [2]f32, src: [4]f32, color: Color) {
 		add_draw_command_texture(.TEXT, texture, 2)
@@ -312,9 +317,10 @@ draw_text_impl :: proc(
 		}
 	}
 
-	texture := font_get_texture(font_handle)
-	atlas_height := font_get_atlas_height(font_handle)
-	font_index := font_get_index(font_handle)
+	texture := font_get_texture(handle)
+	atlas_height := font_get_atlas_height(handle)
+	font_index := font_get_index(handle)
+	size_scalar := style.size / font_get_base_height(handle)
 
 	min_yoff: f32 = 0
 	for r in text {
@@ -332,13 +338,16 @@ draw_text_impl :: proc(
 		w, h := f32(glyph.x1 - glyph.x0), f32(glyph.y1 - glyph.y0)
 
 		src = {f32(glyph.x0), f32(atlas_height - i32(glyph.y0)), w, -h}
-		p = {cursor_x + f32(glyph.xoff), cursor_y + f32(glyph.yoff) - min_yoff}
+		p = {
+			cursor_x + f32(glyph.xoff) * size_scalar,
+			cursor_y + (f32(glyph.yoff) - min_yoff) * size_scalar,
+		}
 
-		size = {f32(glyph.x1 - glyph.x0), f32(glyph.y1 - glyph.y0)}
+		size = {f32(glyph.x1 - glyph.x0) * size_scalar, f32(glyph.y1 - glyph.y0) * size_scalar}
 
 		draw_glyph(texture, p, size, src, color)
 
-		cursor_x += f32(glyph.xadvance)
+		cursor_x += f32(glyph.xadvance) * size_scalar
 	}
 }
 

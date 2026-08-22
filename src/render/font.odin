@@ -10,10 +10,23 @@ import "../util"
 
 /*
 	TODO:
-		* Need to check generation before accessing resource.
-		* Add font unload
 		* When adding more font types, should introduce type_handle. So Font_Handle will point toward a Font_Type_Handle and
 		  the type handle will point towards resource arrays (if needed, look into it when we're there)
+
+	TODO:
+		Support larger sets then just ASCII, look into dynamic glyph caching.
+		Also needs to safely handle missing glyphs.
+
+	TODO:
+		Split Font and Text responsibilities.
+
+		    Font should represent the underlying font resource and glyph data.
+		    Text should handle user-provided strings, layout, measurement, and rendering.
+
+		    During the split, revisit:
+		    - text_height
+		    - text_width
+		    - multiline detection/layout
 */
 
 // ---- HANDLE ---- //
@@ -50,7 +63,8 @@ handle_fields := util.create_handle_data(
 
 
 // ---- CONSTANTS ---- //
-FONT_DEFAULT: Font_Handle
+DEFAULT_FONT: Font_Handle
+DEFAULT_FONT_SIZE :: 32
 NUM_CHAR: i32 : 96
 START_CHAR: i32 : 32
 
@@ -62,6 +76,14 @@ Font_Resource :: struct {
 	baked_chars:   [NUM_CHAR]tt.bakedchar,
 	base_height:   i32,
 }
+
+// Font style. Will later add bold, italien etc, should be introduced as a bit_set maybe, or just a handle
+// Alternatively split up in a more data-oriented way.
+Font_Style :: struct {
+	size:  f32,
+	color: Color,
+}
+DEFAULT_FONT_STYLE: Font_Style : {DEFAULT_FONT_SIZE, WHITE}
 
 
 // ---- DATA ---- //
@@ -80,7 +102,7 @@ font_init :: proc() {
 	font_resources = make([dynamic]Font_Resource, 0, 5)
 	removed = make([dynamic]Font_Handle, 0, 0)
 
-	FONT_DEFAULT = load_font("assets/fonts/roboto.ttf")
+	DEFAULT_FONT = load_font("assets/fonts/roboto.ttf")
 }
 
 // delete font resources
@@ -226,10 +248,25 @@ font_get_atlas_height :: proc(handle: Font_Handle) -> i32 {
 	return font_resources[index].atlas_height
 }
 
-text_width :: proc(handle: Font_Handle, text: string) -> f32 {
+font_get_base_height :: proc(handle: Font_Handle) -> f32 {
+	index := util.get_field(handle, handle_fields.fields[.INDEX], Font_Index)
+	return f32(font_resources[index].base_height)
+}
+
+text_width :: proc(
+	handle: Font_Handle,
+	text: string,
+	style: Font_Style = DEFAULT_FONT_STYLE,
+) -> f32 {
+	if style.size <= 0 {
+		return 0
+	}
+
 	index := util.get_field(handle, handle_fields.fields[.INDEX], Font_Index)
 	has_multi_line, indexes := text_is_multiline(text)
 	width: f32
+	size_scalar := style.size / font_get_base_height(handle)
+
 
 	if has_multi_line {
 		lines := text_get_multilines(text, indexes)
@@ -238,7 +275,7 @@ text_width :: proc(handle: Font_Handle, text: string) -> f32 {
 		for &line, i in lines {
 			for r in line {
 				glyph := get_glyph(index, r)
-				widths[i] += glyph.xadvance
+				widths[i] += (glyph.xadvance * size_scalar)
 			}
 		}
 
@@ -249,7 +286,7 @@ text_width :: proc(handle: Font_Handle, text: string) -> f32 {
 	} else {
 		for r in text {
 			glyph := get_glyph(index, r)
-			width += glyph.xadvance
+			width += glyph.xadvance * size_scalar
 		}
 	}
 
@@ -257,10 +294,19 @@ text_width :: proc(handle: Font_Handle, text: string) -> f32 {
 	return width
 }
 
-text_height :: proc(handle: Font_Handle, text: string) -> f32 {
+text_height :: proc(
+	handle: Font_Handle,
+	text: string,
+	style: Font_Style = DEFAULT_FONT_STYLE,
+) -> f32 {
+	if style.size <= 0 {
+		return 0
+	}
+
 	index := util.get_field(handle, handle_fields.fields[.INDEX], Font_Index)
 	has_multi_line, indexes := text_is_multiline(text)
 	height: f32
+	size_scalar := style.size / font_get_base_height(handle)
 
 	if has_multi_line {
 		lines := text_get_multilines(text, indexes)
@@ -269,7 +315,7 @@ text_height :: proc(handle: Font_Handle, text: string) -> f32 {
 		for &line, i in lines {
 			for r in line {
 				glyph := get_glyph(index, r)
-				heights[i] = math.max(heights[i], f32(glyph.y1 - glyph.y0))
+				heights[i] = math.max(heights[i], f32(glyph.y1 - glyph.y0) * size_scalar)
 			}
 		}
 
@@ -280,7 +326,7 @@ text_height :: proc(handle: Font_Handle, text: string) -> f32 {
 	} else {
 		for r in text {
 			glyph := get_glyph(index, r)
-			height = math.max(height, f32(glyph.y1 - glyph.y0))
+			height = math.max(height, f32(glyph.y1 - glyph.y0) * size_scalar)
 		}
 	}
 
