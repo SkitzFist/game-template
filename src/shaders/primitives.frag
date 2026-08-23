@@ -27,5 +27,9 @@ void main() {
     float aa = max(fwidth(distance), 0.001);
     float alpha = 1.0 - smoothstep(0.0, aa, distance);
 
+    if (alpha <= 0.0) {
+        discard;
+    }
+
     frag_colour = vec4(vColor.rgb, vColor.a * alpha);
 }

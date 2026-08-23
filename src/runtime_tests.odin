@@ -1,5 +1,6 @@
 package game
 
+import gfx "gfx_context"
 import "input"
 import r "render"
 import "window"
@@ -12,6 +13,8 @@ wall, tex2: r.Texture_Index
 motion: bool
 frame: int
 cell_size: f32 = 2.0
+blend_mode: gfx.Blend_Mode = gfx.DEFAULT_BLEND_MODE
+
 Test :: enum {
 	ALL_PRIMITIVES,
 	RECTANGLE_CHECKER,
@@ -26,9 +29,10 @@ Test :: enum {
 	TEXT_SINGLE_LINE,
 	TEXT_MULTI_LINE,
 	TEXT_RANDOM_FULL,
+	BLEND_MODES,
 }
 
-test: Test = .TEXT_RANDOM_FULL
+test: Test = .BLEND_MODES
 
 text := "Lorem ipsum dolor sit amet consectetur adipiscing elit.\n Quisque faucibus ex sapien vitae pellentesque sem placerat.\n In id cursus mi pretium tellus duis convallis.\n Tempus leo eu aenean sed diam urna tempor.\n Pulvinar vivamus fringilla lacus nec metus bibendum egestas.\n Iaculis massa nisl malesuada lacinia integer nunc posuere.\n Ut hendrerit semper vel class aptent taciti sociosqu.\n Ad litora torquent per conubia nostra inceptos himenaeos.\n"
 
@@ -86,6 +90,8 @@ runtime_tests_update :: proc(dt: f32) {
 		text_multi_line()
 	case .TEXT_RANDOM_FULL:
 		text_random_full()
+	case .BLEND_MODES:
+		blend_modes()
 	}
 
 	// r.draw_rectangle(0, 200, r.BLUE)
@@ -94,9 +100,10 @@ runtime_tests_update :: proc(dt: f32) {
 
 	cell_count := (window.width / cell_size) * (window.height / cell_size)
 	text := fmt.aprintf(
-		"FPS: %v\nTriangle Count: %v",
+		"FPS: %v\nTriangle Count: %v\nBlend mode: %v",
 		(1 / dt),
 		cell_count * 2,
+		blend_mode,
 		allocator = context.temp_allocator,
 	)
 
@@ -448,5 +455,41 @@ triangle_pulse_test :: proc(cell_size: f32) {
 			}
 		}
 	}
+}
+
+blend_modes :: proc() {
+	if input.is_released(input.Key.UP) {
+		current := int(blend_mode)
+		next := (current + 1) % len(gfx.Blend_Mode)
+		blend_mode = gfx.Blend_Mode(next)
+	} else if input.is_released(input.Key.DOWN) {
+		current := int(blend_mode)
+		next := current - 1
+		if next < 0 {
+			next = len(gfx.Blend_Mode) - 1
+		}
+		blend_mode = gfx.Blend_Mode(next)
+	}
+
+	r.set_blend_mode(blend_mode)
+
+	size: f32 = 100
+	padding: f32 = 1.3
+	pos: [2]f32 = {size * padding, size * 4}
+
+	t := (f32(math.sin(window.get_time())) + 1) * 0.5
+	travel := size * 2
+
+	left_x := pos.x + travel * t
+	right_x := pos.x + size * 4 - travel * t
+
+	r.draw_circle({left_x, pos.y}, size * 0.25, r.WHITE - {0, 0, 0, 200})
+	r.draw_circle({right_x, pos.y}, size * 0.25, r.GOLD - {0, 0, 0, 200})
+
+	r.draw_circle({left_x, pos.y}, size, r.BLUE)
+	r.draw_circle({right_x, pos.y}, size, r.RED)
+
+	r.end_blend_mode()
+
 }
 

@@ -9,3 +9,5 @@
 [] Support multi window. Should move over to having a window handle, creating a window should return the handle. GLFW and other impls should receive the handle as well so
    callbacks can be directed properly. Input handling also needs a window handle attached (possibly only handle input on focused window, that way no separate handling, only delegating).
 [] HIGH PRIO Benchmark testing with file save, so it's easy to compare. Should be able to 'commit' result or 'discard'.
+[] HIGH PRIO must include assets folder when building for release
+[] HIGH PIRO add support for blend modes

@@ -47,13 +47,11 @@ attach_context :: proc(
 }
 
 init :: proc() {
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
 	gpu_data_init()
 	primitives_init()
 	textures_init()
 	bitmap_init()
+	set_blend_mode(gfx.DEFAULT_BLEND_MODE)
 }
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {

@@ -55,3 +55,15 @@ when PLATFORM_STR == "DESKTOP" {
 	PLATFORM :: Platform.DESKTOP
 }
 
+// ---- BLEND MODE ---- //
+Blend_Mode :: enum u8 {
+	NONE,
+	ALPHA,
+	ADDITIVE,
+	// NOTE: Current OpenGL multiply blend ignores source alpha.
+	MULTIPLY,
+	PREMULTIPLIED,
+	SUBTRACT,
+}
+
+DEFAULT_BLEND_MODE: Blend_Mode = .ALPHA
