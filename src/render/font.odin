@@ -202,7 +202,6 @@ unload_font :: proc(handle: Font_Handle) {
 	if !font_is_handle_valid(handle) {return}
 
 	index := font_get_index(handle)
-	font_resources[index] = {}
 
 	handle := util.increment_field(handle, handle_fields.fields[.GENERATION], u8)
 	font_handles[index] = handle
