@@ -45,10 +45,20 @@ texture_handle := util.create_handle_data(
 	},
 )
 
+Blend_Mode_Field :: enum u8 {
+	CMD,
+	BLEND_MODE,
+}
+blend_mode_fields := util.create_handle_data(
+	Handle,
+	[Blend_Mode_Field]Handle{.CMD = CMD_BIT_FIELD.bits, .BLEND_MODE = size_of(gfx.Blend_Mode) * 8},
+)
+
 Draw_Command :: enum u8 {
 	PRIMITIVE,
 	TEXTURE,
 	TEXT,
+	BLEND_MODE,
 }
 
 @(private = "file")
@@ -96,6 +106,17 @@ draw_command_buffer :: proc() {
 			when gfx.API == .OPENGL {
 				gl.draw_text(texture_id(texture_index), count)
 			}
+		case .BLEND_MODE:
+			blend_mode := util.get_field(
+				handle,
+				blend_mode_fields.fields[.BLEND_MODE],
+				gfx.Blend_Mode,
+			)
+
+			when gfx.API == .OPENGL {
+				gl.set_blend_mode(blend_mode)
+			}
+
 		}
 	}
 
@@ -180,6 +201,13 @@ add_draw_command_texture :: proc(
 	} else {
 		append_new(cmd, texture_index, triangle_count)
 	}
+}
+
+@(private = "file")
+add_blend_mode_command :: proc(blend_mode: gfx.Blend_Mode) {
+	handle := util.set_field(Handle{}, blend_mode_fields.fields[.CMD], Draw_Command.BLEND_MODE)
+	handle = util.set_field(handle, blend_mode_fields.fields[.BLEND_MODE], blend_mode)
+	append(&draw_commands, handle)
 }
 
 draw_triangle :: proc(p1, p2, p3: [2]f32, color: Color) {
@@ -349,5 +377,15 @@ draw_text_impl :: proc(
 
 		cursor_x += f32(glyph.xadvance) * size_scalar
 	}
+}
+
+// ---- BLEND MODES ---- //
+set_blend_mode :: proc(blend_mode: gfx.Blend_Mode) {
+	add_blend_mode_command(blend_mode)
+}
+
+end_blend_mode :: proc() {
+	// set default blend mode
+	add_blend_mode_command(gfx.DEFAULT_BLEND_MODE)
 }
 
