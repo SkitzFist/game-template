@@ -1,3 +1,4 @@
+#+build linux, windows
 package opengl
 
 import gl "vendor:OpenGL"
@@ -31,4 +32,3 @@ set_blend_mode :: proc(blend_mode: gfx.Blend_Mode) {
 	}
 
 }
-
