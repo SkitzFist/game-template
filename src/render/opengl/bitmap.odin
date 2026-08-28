@@ -15,8 +15,7 @@ bitmap_shutdown :: proc() {
 	gl.DeleteProgram(bitmap_shader)
 }
 
-draw_text :: proc(texture: u32, triangle_count: u32) {
-	triangle_count := i32(triangle_count)
+draw_text :: proc(texture: u32, vertex_count, last_drawn: i32) {
 	if should_bind_shader(bitmap_shader) {
 		bind_shader(bitmap_shader)
 	}
@@ -30,9 +29,5 @@ draw_text :: proc(texture: u32, triangle_count: u32) {
 		bind_texture(texture)
 	}
 
-	vertex_count := triangle_count * 3
-
 	gl.DrawArrays(gl.TRIANGLES, last_drawn, vertex_count)
-	last_drawn += vertex_count
 }
-
