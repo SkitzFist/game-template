@@ -3,6 +3,8 @@ package render
 import gfx "../gfx_context"
 import gl "opengl"
 
+render_width, render_height: f32
+
 // ---- WINDOW ---- //
 context_config :: proc() -> gfx.Config {
 	when gfx.API == .OPENGL {
@@ -18,14 +20,17 @@ attach_context :: proc(
 	version: gfx.Version,
 	set_proc_address: gfx.Set_Proc_Address,
 ) {
+	render_width, render_height = f32(width), f32(height)
 	when gfx.API == .OPENGL {
 		gl.attach_context(width, height, version, set_proc_address)
 	}
 }
 
 init :: proc() {
+	vertex_init()
+
 	when gfx.API == .OPENGL {
-		gl.init()
+		gl.init(Vertex)
 	} else when gfx.API == .WEBGL {
 		//no impl yet
 	}
@@ -38,6 +43,7 @@ init :: proc() {
 on_frame_buffer_size_changed: gfx.Framebuffer_Resize_Callback : proc(
 	width, height, prev_width, prev_height: f32,
 ) {
+	render_width, render_height = width, height
 	when gfx.API == .OPENGL {
 		gl.on_frame_buffer_size_changed(i32(width), i32(height))
 	} else when gfx.API == .WEBGL {
@@ -48,6 +54,7 @@ on_frame_buffer_size_changed: gfx.Framebuffer_Resize_Callback : proc(
 shutdown :: proc() {
 	cmd_buffer_shutdown()
 	font_shutdown()
+	vertex_shutdown()
 
 	when gfx.API == .OPENGL {
 		gl.shutdown()
@@ -59,6 +66,8 @@ shutdown :: proc() {
 // ---- FRAME ----
 
 draw_begin :: proc(time: f64) {
+	vertex_begin_frame()
+
 	when gfx.API == .OPENGL {
 		gl.draw_begin(f32(time))
 	} else when gfx.API == .WEBGL {
@@ -67,12 +76,7 @@ draw_begin :: proc(time: f64) {
 }
 
 draw_end :: proc() {
-	when gfx.API == .OPENGL {
-		gl.draw_end()
-	} else when gfx.API == .WEBGL {
-		//no impl yet
-	}
-
+	vertex_upload()
 	draw_command_buffer()
 }
 
@@ -88,4 +92,3 @@ clear_screen :: proc(color: Color) {
 		//no impl yet
 	}
 }
-

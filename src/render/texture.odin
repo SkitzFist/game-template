@@ -134,3 +134,26 @@ texture_height :: proc(index: Texture_Index) -> f32 {
 	return f32(texture_heights[index])
 }
 
+add_texture_full :: proc(pos, size: [2]f32, color: [4]u8) {
+	append_texture_quad(to_clip_space(pos), size_to_clip_size(size), pack_color(color))
+}
+
+add_texture_part :: proc(pos, size, texture_size_px: [2]f32, src_px: [4]f32, color: [4]u8) {
+	src_left: f32 = src_px.x / texture_size_px.x
+	src_right: f32 = (src_px.x + src_px[2]) / texture_size_px.x
+	src_top: f32 = 1.0 - src_px.y / texture_size_px.y
+	src_bottom: f32 = 1.0 - (src_px.y + src_px[3]) / texture_size_px.y
+
+	append_texture_quad(
+		to_clip_space(pos),
+		size_to_clip_size(size),
+		pack_color(color),
+		{
+			{src_left, src_top},
+			{src_right, src_top},
+			{src_left, src_bottom},
+			{src_right, src_top},
+			{src_right, src_bottom},
+		},
+	)
+}

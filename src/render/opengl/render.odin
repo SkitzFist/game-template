@@ -8,12 +8,6 @@ import gl "vendor:OpenGL"
 @(private)
 TAG :: "[OPENGL]"
 
-@(private)
-render_width, render_height: i32
-
-@(private)
-TIME: f32
-
 @(private = "file")
 SUPPORTED_VERSIONS: []gfx.Version = {{4, 6}, {4, 3}, {4, 1}, {3, 3}}
 
@@ -34,10 +28,7 @@ attach_context :: proc(
 ) {
 	gl.load_up_to(version.major, version.minor, set_proc_address)
 
-	render_width = width
-	render_height = height
-
-	gl.Viewport(0, 0, render_width, render_height)
+	gl.Viewport(0, 0, width, height)
 
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
@@ -46,8 +37,8 @@ attach_context :: proc(
 	log.info(TAG, "Attached to window")
 }
 
-init :: proc() {
-	gpu_data_init()
+init :: proc($Vertex: typeid) {
+	gpu_data_init(Vertex)
 	primitives_init()
 	textures_init()
 	bitmap_init()
@@ -56,8 +47,6 @@ init :: proc() {
 
 on_frame_buffer_size_changed :: proc(width, height: i32) {
 	gl.Viewport(0, 0, width, height)
-	render_width = width
-	render_height = height
 }
 
 shutdown :: proc() {
@@ -69,18 +58,14 @@ shutdown :: proc() {
 
 // --- FRAME --- //
 draw_begin :: proc(time: f32) {
-	TIME = time
-	gpu_data_begin_frame()
+	gpu_data_ubo_upload(time)
 }
 
 draw_end :: proc() {
-	gpu_data_upload()
 }
-
 
 // --- DRAW --- //
 clear_screen :: proc(r, g, b, a: f32) {
 	gl.ClearColor(r, g, b, a)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
-

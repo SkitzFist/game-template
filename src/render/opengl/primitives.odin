@@ -3,8 +3,6 @@ package opengl
 
 import gl "vendor:OpenGL"
 
-import "core:math"
-
 Primitives :: struct {
 	vao: u32,
 }
@@ -16,7 +14,6 @@ primitives_shader: u32
 
 primitives: Primitives
 
-NONE_HALF: [2]f32 : {0, 0}
 
 primitives_init :: proc() {
 	primitives_shader = create_shader_u8(primitives_vert, primitives_frag)
@@ -50,173 +47,10 @@ init_array_data :: proc(data: ^Primitives) {
 	pointer += 2 * size_of(f32)
 
 	gl.VertexAttribPointer(3, 1, gl.FLOAT, gl.FALSE, VERTEX_STRIDE_BYTES, pointer)
-
 }
 
-// TODO refactor to other place
-pack_color :: proc(color: [4]u8) -> u32 {
-	return u32(color[0]) | u32(color[1]) << 8 | u32(color[2]) << 16 | u32(color[3]) << 24
-}
 
-// TODO refactor to other place
-to_clip_space :: proc(x, y: f32) -> (f32, f32) {
-	clip_x := (x / f32(render_width)) * 2.0 - 1.0
-	clip_y := 1.0 - (y / f32(render_height)) * 2.0
-	return clip_x, clip_y
-}
-
-add_rectangle :: proc(pos, size: [2]f32, color: [4]u8, roundness: f32 = 0.0) {
-	color := pack_color(color)
-	x, y := to_clip_space(pos.x, pos.y)
-
-	// world space
-	half_w, half_h := size.x / 2, size.y / 2
-
-	// clip_space
-	width, height := (size.x / f32(render_width) * 2), (size.y / f32(render_height)) * 2
-
-	// *---+ 0
-	// |---|
-	// +---+
-	append_vertex(Vertex{x, y, color, {-half_w, half_h}, roundness})
-
-	// +---* 1
-	// |---|
-	// +---+
-	append_vertex(Vertex{x + width, y, color, {half_w, half_h}, roundness})
-
-	// +---+ 2
-	// |---|
-	// *---+
-	append_vertex(Vertex{x, y - height, color, {-half_w, -half_h}, roundness})
-	append_vertex(Vertex{x, y - height, color, {-half_w, -half_h}, roundness})
-
-
-	// +---* 1
-	// |---|
-	// +---+
-	append_vertex(Vertex{x + width, y, color, {half_w, half_h}, roundness})
-
-	// +---+ 3
-	// |---|
-	// +---*
-	append_vertex(Vertex{x + width, y - height, color, {half_w, -half_h}, roundness})
-}
-
-add_circle :: proc(pos: [2]f32, roundness: f32, color: [4]u8) {
-	color := pack_color(color)
-
-	width, height :=
-		((roundness * 2) / f32(render_width) * 2), ((roundness * 2) / f32(render_height)) * 2
-	half_w, half_h := roundness, roundness
-
-	x, y := to_clip_space(pos.x, pos.y)
-	x, y = x - (width / 2), y + (height / 2)
-
-	// *---+ 0
-	// |---|
-	// +---+
-	append_vertex(Vertex{x, y, color, {-half_w, half_h}, 1.0})
-
-	// +---* 1
-	// |---|
-	// +---+
-	append_vertex(Vertex{x + width, y, color, {half_w, half_h}, 1.0})
-
-	// +---+ 2
-	// |---|
-	// *---+
-	append_vertex(Vertex{x, y - height, color, {-half_w, -half_h}, 1.0})
-	append_vertex(Vertex{x, y - height, color, {-half_w, -half_h}, 1.0})
-
-
-	// +---* 1
-	// |---|
-	// +---+
-	append_vertex(Vertex{x + width, y, color, {half_w, half_h}, 1.0})
-
-	// +---+ 3
-	// |---|
-	// +---*
-	append_vertex(Vertex{x + width, y - height, color, {half_w, -half_h}, 1.0})
-}
-
-add_triangle :: proc(p1, p2, p3: [2]f32, color: [4]u8) {
-	color := pack_color(color)
-
-	x1, y1 := to_clip_space(p1.x, p1.y)
-	append_vertex(Vertex{x1, y1, color, NONE_HALF, 0})
-
-	x2, y2 := to_clip_space(p2.x, p2.y)
-	append_vertex(Vertex{x2, y2, color, NONE_HALF, 0})
-
-	x3, y3 := to_clip_space(p3.x, p3.y)
-	append_vertex(Vertex{x3, y3, color, NONE_HALF, 0})
-}
-
-add_line_points :: proc(p1, p2: [2]f32, thickness: f32, color: [4]u8, roundness: f32 = 0) {
-	color := pack_color(color)
-
-	dx, dy := p2.x - p1.x, p2.y - p1.y
-	d := math.sqrt((dx * dx) + (dy * dy))
-
-	half_length := d / 2
-	half_thickness := thickness / 2
-
-	x1, y1 := to_clip_space(p1.x, p1.y)
-	x2, y2 := to_clip_space(p2.x, p2.y)
-
-	offset_x, offset_y: f32
-	if d != 0 {
-		dx /= d
-		dy /= d
-
-		nx, ny := -dy, dx
-		offset_x = (nx * half_thickness / f32(render_width)) * 2.0
-		offset_y = -(ny * half_thickness / f32(render_height)) * 2.0
-	}
-
-	x1a, y1a := x1 + offset_x, y1 + offset_y
-	append_vertex(Vertex{x1a, y1a, color, {-half_length, half_thickness}, roundness})
-
-	x1b, y1b := x1 - offset_x, y1 - offset_y
-	append_vertex(Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
-
-	x2a, y2a := x2 + offset_x, y2 + offset_y
-	append_vertex(Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
-
-	x2b, y2b := x2 - offset_x, y2 - offset_y
-	append_vertex(Vertex{x1b, y1b, color, {-half_length, -half_thickness}, roundness})
-	append_vertex(Vertex{x2b, y2b, color, {half_length, -half_thickness}, roundness})
-	append_vertex(Vertex{x2a, y2a, color, {half_length, half_thickness}, roundness})
-}
-
-add_line_direction :: proc(
-	point, direction: [2]f32,
-	length, thickness: f32,
-	color: [4]u8,
-	roundness: f32 = 0,
-) {
-	dx, dy := direction.x, direction.y
-	d := math.sqrt((dx * dx) + (dy * dy))
-
-	p2 := point
-	if d != 0 {
-		scale := length / d
-		p2 += direction * scale
-	}
-
-	add_line_points(point, p2, thickness, color, roundness)
-}
-
-add_line :: proc {
-	add_line_points,
-	add_line_direction,
-}
-
-draw_primitives :: proc(count: u32) {
-	count := i32(count)
-
+draw_primitives :: proc(vertex_count: i32, last_drawn: i32) {
 	if should_bind_shader(primitives_shader) {
 		bind_shader(primitives_shader)
 	}
@@ -225,12 +59,5 @@ draw_primitives :: proc(count: u32) {
 		bind_vao(primitives.vao)
 	}
 
-	// log.infof("Drawing %i triangles", count)
-
-	// three vertexes per triangle
-	vertex_count := count * 3
-	// log.info("primitives:", vertex_count / 3)
 	gl.DrawArrays(gl.TRIANGLES, last_drawn, vertex_count)
-	last_drawn += vertex_count
 }
-

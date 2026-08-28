@@ -83,9 +83,12 @@ draw_command_buffer :: proc() {
 		switch draw_cmd {
 		case .PRIMITIVE:
 			count := util.get_field(handle, primitive_handle.fields[.COUNT], Count)
+			vertex_count := i32(count) * 3
 			when gfx.API == .OPENGL {
-				gl.draw_primitives(count)
+				gl.draw_primitives(vertex_count, vertex_last_drawn)
 			}
+			vertex_last_drawn += vertex_count
+
 		case .TEXTURE:
 			texture_index := util.get_field(
 				handle,
@@ -93,9 +96,12 @@ draw_command_buffer :: proc() {
 				Texture_Index,
 			)
 			count := util.get_field(handle, texture_handle.fields[.COUNT], Count)
+			vertex_count := i32(count) * 3
 			when gfx.API == .OPENGL {
-				gl.draw_textures(texture_id(texture_index), count)
+				gl.draw_textures(texture_id(texture_index), vertex_count, vertex_last_drawn)
 			}
+			vertex_last_drawn += vertex_count
+
 		case .TEXT:
 			texture_index := util.get_field(
 				handle,
@@ -103,9 +109,12 @@ draw_command_buffer :: proc() {
 				Texture_Index,
 			)
 			count := util.get_field(handle, texture_handle.fields[.COUNT], Count)
+			vertex_count := i32(count) * 3
 			when gfx.API == .OPENGL {
-				gl.draw_text(texture_id(texture_index), count)
+				gl.draw_text(texture_id(texture_index), vertex_count, vertex_last_drawn)
 			}
+			vertex_last_drawn += vertex_count
+
 		case .BLEND_MODE:
 			blend_mode := util.get_field(
 				handle,
@@ -212,34 +221,22 @@ add_blend_mode_command :: proc(blend_mode: gfx.Blend_Mode) {
 
 draw_triangle :: proc(p1, p2, p3: [2]f32, color: Color) {
 	add_draw_command_primitive(.PRIMITIVE, 1)
-
-	when gfx.API == .OPENGL {
-		gl.add_triangle(p1, p2, p3, color)
-	}
+	add_triangle(p1, p2, p3, color)
 }
 
 draw_rectangle :: proc(pos, size: [2]f32, color: Color, roundness: f32 = 0.0) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
-
-	when gfx.API == .OPENGL {
-		gl.add_rectangle(pos, size, color, roundness)
-	}
+	add_rectangle(pos, size, color, roundness)
 }
 
 draw_circle :: proc(pos: [2]f32, radius: f32, color: Color) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
-
-	when gfx.API == .OPENGL {
-		gl.add_circle(pos, radius, color)
-	}
+	add_circle(pos, radius, color)
 }
 
 draw_line_points :: proc(p1, p2: [2]f32, thickness: f32, color: Color, roundness: f32 = 0.0) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
-
-	when gfx.API == .OPENGL {
-		gl.add_line(p1, p2, thickness, color, roundness)
-	}
+	add_line(p1, p2, thickness, color, roundness)
 }
 
 draw_line_direction :: proc(
@@ -249,10 +246,7 @@ draw_line_direction :: proc(
 	roundness: f32 = 0.0,
 ) {
 	add_draw_command_primitive(.PRIMITIVE, 2)
-
-	when gfx.API == .OPENGL {
-		gl.add_line_direction(point, direction, length, thickness, color, roundness)
-	}
+	add_line_direction(point, direction, length, thickness, color, roundness)
 }
 
 draw_line :: proc {
@@ -264,24 +258,12 @@ draw_line :: proc {
 // ---- TEXTURE ----
 draw_texture_full :: proc(texture: Texture_Index, pos, size: [2]f32, color: Color) {
 	add_draw_command_texture(.TEXTURE, texture, 2)
-
-	when gfx.API == .OPENGL {
-		gl.add_texture_full(pos, size, color)
-	}
+	add_texture_full(pos, size, color)
 }
 
 draw_texture_part :: proc(texture: Texture_Index, pos, size: [2]f32, src: [4]f32, color: Color) {
 	add_draw_command_texture(.TEXTURE, texture, 2)
-
-	when gfx.API == .OPENGL {
-		gl.add_texture_part(
-			pos,
-			size,
-			{texture_width(texture), texture_height(texture)},
-			src,
-			color,
-		)
-	}
+	add_texture_part(pos, size, {texture_width(texture), texture_height(texture)}, src, color)
 
 }
 
@@ -334,15 +316,7 @@ draw_text_impl :: proc(
 ) {
 	draw_glyph :: proc(texture: Texture_Index, pos, size: [2]f32, src: [4]f32, color: Color) {
 		add_draw_command_texture(.TEXT, texture, 2)
-		when gfx.API == .OPENGL {
-			gl.add_texture_part(
-				pos,
-				size,
-				{texture_width(texture), texture_height(texture)},
-				src,
-				color,
-			)
-		}
+		add_texture_part(pos, size, {texture_width(texture), texture_height(texture)}, src, color)
 	}
 
 	texture := font_get_texture(handle)
@@ -388,4 +362,3 @@ end_blend_mode :: proc() {
 	// set default blend mode
 	add_blend_mode_command(gfx.DEFAULT_BLEND_MODE)
 }
-

@@ -106,70 +106,7 @@ unload_texture :: proc(texture: ^u32) {
 	gl.DeleteTextures(1, texture)
 }
 
-add_texture_full :: proc(pos, size: [2]f32, color: [4]u8) {
-
-	color := pack_color(color)
-	x, y := to_clip_space(pos.x, pos.y)
-
-	// clip_space
-	width, height := (size.x / f32(render_width)) * 2, (size.y / f32(render_height)) * 2
-
-	// *---+ 0
-	// |---|
-	// +---+
-	append_vertex(Vertex{x, y, color, {0.0, 1.0}, 0})
-
-	// +---* 1
-	// |---|
-	// +---+
-	append_vertex(Vertex{x + width, y, color, {1.0, 1.0}, 0})
-
-	// +---+ 2
-	// |---|
-	// *---+
-	append_vertex(Vertex{x, y - height, color, {0.0, 0.0}, 0})
-	append_vertex(Vertex{x, y - height, color, {0.0, 0.0}, 0})
-
-
-	// +---* 1
-	// |---|
-	// +---+
-	append_vertex(Vertex{x + width, y, color, {1.0, 1.0}, 0})
-
-	// +---+ 3
-	// |---|
-	// +---*
-	append_vertex(Vertex{x + width, y - height, color, {1.0, 0.0}, 0})
-}
-
-add_texture_part :: proc(pos, size, texture_size_px: [2]f32, src_px: [4]f32, color: [4]u8) {
-
-	color := pack_color(color)
-	x, y := to_clip_space(pos.x, pos.y)
-
-	width, height := (size.x / f32(render_width)) * 2, (size.y / f32(render_height)) * 2
-
-	src_left: f32 = src_px.x / texture_size_px.x
-	src_right: f32 = (src_px.x + src_px[2]) / texture_size_px.x
-	src_top: f32 = 1.0 - src_px.y / texture_size_px.y
-	src_bottom: f32 = 1.0 - (src_px.y + src_px[3]) / texture_size_px.y
-
-	append_vertex(Vertex{x, y, color, {src_left, src_top}, 0})
-
-	append_vertex(Vertex{x + width, y, color, {src_right, src_top}, 0})
-
-	append_vertex(Vertex{x, y - height, color, {src_left, src_bottom}, 0})
-	append_vertex(Vertex{x, y - height, color, {src_left, src_bottom}, 0})
-
-	append_vertex(Vertex{x + width, y, color, {src_right, src_top}, 0})
-
-	append_vertex(Vertex{x + width, y - height, color, {src_right, src_bottom}, 0})
-
-}
-
-draw_textures :: proc(texture: u32, triangle_count: u32) {
-	triangle_count := i32(triangle_count)
-
+draw_textures :: proc(texture: u32, vertex_count: i32, last_drawn: i32) {
 	if should_bind_shader(texture_shader) {
 		bind_shader(texture_shader)
 	}
@@ -182,11 +119,5 @@ draw_textures :: proc(texture: u32, triangle_count: u32) {
 		bind_texture(texture)
 	}
 
-	// log.infof("Texture count: %i", triangle_count / 2)
-
-	vertex_count := triangle_count * 3
-
 	gl.DrawArrays(gl.TRIANGLES, last_drawn, vertex_count)
-	last_drawn += vertex_count
 }
-
