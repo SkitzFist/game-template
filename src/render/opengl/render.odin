@@ -15,18 +15,23 @@ SUPPORTED_VERSIONS: []gfx.Version = {{4, 6}, {4, 3}, {4, 1}, {3, 3}}
 context_config :: proc() -> gfx.Config {
 	return {
 		api = .OPENGL,
-		supported_versions = SUPPORTED_VERSIONS[:],
-		profile = .CORE,
 		samples = 8,
+		backend_config = gfx.OpenGl_Config{supported_versions = SUPPORTED_VERSIONS[:]},
 	}
 }
 
-attach_context :: proc(
-	width, height: i32,
-	version: gfx.Version,
-	set_proc_address: gfx.Set_Proc_Address,
-) {
-	gl.load_up_to(version.major, version.minor, set_proc_address)
+attach_context :: proc(width, height: i32, window_response: gfx.Window_Response) {
+
+	switch response in window_response {
+	case gfx.Window_WebGl_Response:
+		panic("[OPENGL] Does not support Window_WebGl_Response")
+	case gfx.Window_OpenGl_Response:
+		gl.load_up_to(
+			response.accepted_version.major,
+			response.accepted_version.minor,
+			response.set_proc_address,
+		)
+	}
 
 	gl.Viewport(0, 0, width, height)
 
