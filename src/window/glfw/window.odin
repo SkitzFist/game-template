@@ -22,7 +22,7 @@ create :: proc(
 	on_framebuffer_resized: proc(width, height: i32),
 	fullscreen: bool = true,
 ) -> (
-	version: gfx.Version,
+	version: gfx.Window_Response,
 	success: bool,
 ) {
 	//store odin context so we can use it in proc "c" functions
@@ -52,17 +52,24 @@ create :: proc(
 
 	window_handle = nil
 	accepted_version: gfx.Version = {0, 0}
-	for version in config.supported_versions {
-		glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, i32(version.major))
-		glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, i32(version.minor))
-		window_handle = glfw.CreateWindow(mode.width, mode.height, title, nil, nil)
 
-		if window_handle != nil {
-			accepted_version = version
-			break
+	switch backend_config in config.backend_config {
+	case gfx.WebGl_Config:
+		panic("[GLFW] Does not support WebGl config")
+	case gfx.OpenGl_Config:
+		for version in backend_config.supported_versions {
+			glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, i32(version.major))
+			glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, i32(version.minor))
+			window_handle = glfw.CreateWindow(mode.width, mode.height, title, nil, nil)
+
+			if window_handle != nil {
+				accepted_version = version
+				break
+			}
+
+			log.infof("[GLFW] failed creating window with version: %v", version)
 		}
 
-		log.infof("[GLFW] failed creating window with version: %v", version)
 	}
 
 	if window_handle == nil {
@@ -95,11 +102,12 @@ create :: proc(
 
 	log.info("[GLFW] created window with version:", accepted_version)
 
-	return accepted_version, true
-}
+	response: gfx.Window_Response = gfx.Window_OpenGl_Response {
+		accepted_version = accepted_version,
+		set_proc_address = glfw.gl_set_proc_address,
+	}
 
-gl_set_proc_address :: proc(p: rawptr, name: cstring) {
-	glfw.gl_set_proc_address(p, name)
+	return response, true
 }
 
 set_title :: proc(title: cstring) {
@@ -112,6 +120,7 @@ destroy :: proc() {
 	log.info("[GLFW] destroyed & Terminated")
 }
 
+// TODO this is
 poll_events :: proc() {
 	glfw.PollEvents()
 }
@@ -228,4 +237,3 @@ frame_buffer_size_callback: glfw.FramebufferSizeProc : proc "c" (
 
 	on_framebuffer_resized_callback(width, height)
 }
-

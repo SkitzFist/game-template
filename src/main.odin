@@ -14,14 +14,9 @@ main :: proc() {
 	window.init()
 	input.init()
 
-	accepted_render_api_version := window.create(PROJECT_NAME, r.context_config())
+	window_response := window.create(PROJECT_NAME, r.context_config())
 
-	r.attach_context(
-		i32(window.width),
-		i32(window.height),
-		accepted_render_api_version,
-		window.gl_set_proc_address,
-	)
+	r.attach_context(i32(window.width), i32(window.height), window_response)
 	append(&window.resize_callbacks, r.on_frame_buffer_size_changed)
 
 	r.init()
@@ -98,4 +93,3 @@ reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
 	mem.tracking_allocator_clear(allocator)
 	return err
 }
-

@@ -15,14 +15,11 @@ context_config :: proc() -> gfx.Config {
 	}
 }
 
-attach_context :: proc(
-	width, height: i32,
-	version: gfx.Version,
-	set_proc_address: gfx.Set_Proc_Address,
-) {
+attach_context :: proc(width, height: i32, window_response: gfx.Window_Response) {
 	render_width, render_height = f32(width), f32(height)
+
 	when gfx.API == .OPENGL {
-		gl.attach_context(width, height, version, set_proc_address)
+		gl.attach_context(width, height, window_response)
 	}
 }
 
