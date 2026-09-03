@@ -14,4 +14,3 @@ load_file :: proc(path: string, allocator: mem.Allocator = context.allocator) ->
 
 	return data
 }
-

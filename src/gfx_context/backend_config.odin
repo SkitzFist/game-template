@@ -32,5 +32,18 @@ Window_OpenGl_Response :: struct {
 }
 
 // ---- WEB GL ---- //
-WebGl_Config :: struct {}
+
+Web_Window_Mode :: enum {
+	STRETCH,
+	FIXED,
+	ASPECT_FIT,
+	ASPECT_FILL,
+}
+
+WebGl_Config :: struct {
+	canvas_name:     string,
+	web_window_mode: Web_Window_Mode,
+	width, height:   f32,
+	aspect_ratio:    f32,
+}
 Window_WebGl_Response :: struct {}
