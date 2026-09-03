@@ -5,6 +5,7 @@ function startGame(wasm) {
   odin.web_init()
 
   if (!odin.web_tick) {
+    console.error("web_tick not available")
     return
   }
 

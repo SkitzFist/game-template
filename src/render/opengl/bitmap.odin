@@ -3,8 +3,8 @@ package opengl
 
 import gl "vendor:OpenGL"
 
-bitmap_frag := #load("../../shaders/bitmap.frag")
-bitmap_vert := #load("../../shaders/bitmap.vert")
+bitmap_frag := #load("../../shaders/opengl/bitmap.frag")
+bitmap_vert := #load("../../shaders/opengl/bitmap.vert")
 bitmap_shader: u32
 
 bitmap_init :: proc() {

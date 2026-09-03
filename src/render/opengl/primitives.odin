@@ -8,8 +8,8 @@ Primitives :: struct {
 }
 
 // TODO refactor shader
-primitives_vert := #load("../../shaders/primitives.vert")
-primitives_frag := #load("../../shaders/primitives.frag")
+primitives_vert := #load("../../shaders/opengl/primitives.vert")
+primitives_frag := #load("../../shaders/opengl/primitives.frag")
 primitives_shader: u32
 
 primitives: Primitives

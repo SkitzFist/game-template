@@ -369,4 +369,3 @@ text_get_multilines :: proc(text: string, indexes: []int) -> []string {
 
 	return lines
 }
-

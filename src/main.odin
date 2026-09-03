@@ -1,8 +1,5 @@
 #+build linux, windows
 package game
-import "base:runtime"
-import "core:log"
-import "core:mem"
 
 import "input"
 import r "render"
@@ -36,60 +33,4 @@ main :: proc() {
 	}
 
 	shutdown()
-}
-
-
-tick :: proc(dt: f32) {
-	// fmt.println("Fps:", 1 / dt)
-	frame += 1
-	// run input systems
-	if input.is_pressed(input.Key.ESCAPE) {
-		window.set_close(true)
-	}
-
-
-	// run update systems
-	r.clear_screen(r.BLACK)
-
-	// run render systems
-	r.draw_begin(window.get_time())
-
-	runtime_tests_update(dt)
-
-	r.draw_end()
-	window.swap_buffer()
-
-	// reset input
-	input.post_frame()
-
-	// reset arena alloc
-	mem.arena_free_all(&arena)
-}
-
-shutdown :: proc() {
-	log.info("[MAIN] shutting down...")
-
-	r.shutdown()
-	log.info("[MAIN] Renderer shut down successfully")
-
-	window.shutdown()
-	log.info("[MAIN] Window shutdown successfully")
-
-	when MEM_TRACK {
-		reset_tracking_allocator(&tracking_allocator)
-	}
-
-	log.info("[MAIN] shutdown completed")
-}
-
-reset_tracking_allocator :: proc(allocator: ^mem.Tracking_Allocator) -> bool {
-	err := false
-
-	for _, value in allocator.allocation_map {
-		log.errorf("%v: Leaked %v bytes\n", value.location, value.size)
-		err = true
-	}
-
-	mem.tracking_allocator_clear(allocator)
-	return err
 }

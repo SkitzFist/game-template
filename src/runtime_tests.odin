@@ -492,4 +492,3 @@ blend_modes :: proc() {
 	r.end_blend_mode()
 
 }
-

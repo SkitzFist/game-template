@@ -4,6 +4,7 @@ import "core:log"
 
 import gfx "../gfx_context"
 import glfw "glfw"
+import web "web"
 
 /*
 
@@ -41,7 +42,10 @@ create :: proc(
 		width, height = f32(w), f32(h)
 		return response
 	} else when gfx.PLATFORM == .WEB {
-		// no impl yet
+		response := web.create(title, config, on_framebuffer_resized, fullscreen)
+		w, h := web.get_frame_buffer_size()
+		width, height = f32(w), f32(h)
+		return response
 	}
 
 	panic("Platform not implemented")
@@ -51,7 +55,7 @@ shutdown :: proc() {
 	when gfx.PLATFORM == .DESKTOP {
 		glfw.destroy()
 	} else when gfx.PLATFORM == .WEB {
-		// no impl yet
+		web.shutdown()
 	}
 
 	delete(resize_callbacks)
@@ -62,7 +66,8 @@ set_title :: proc(title: cstring) {
 		glfw.set_title(title)
 		return
 	} else when gfx.PLATFORM == .WEB {
-		// no impl yet
+		web.set_title(title)
+		return
 	}
 	panic("Platform not implemented")
 }
@@ -82,7 +87,7 @@ get_time :: proc() -> f64 {
 	when gfx.PLATFORM == .DESKTOP {
 		return glfw.get_time()
 	} else when gfx.PLATFORM == .WEB {
-		// no impl yet
+		return web.get_time()
 	}
 
 	panic("Platform not implemented")
@@ -104,7 +109,8 @@ set_close :: proc(should_close: b32) {
 		glfw.set_close(should_close)
 		return
 	} else when gfx.PLATFORM == .WEB {
-		// Does not apply to WEB
+		// no op
+		return
 	}
 	panic("Platform not implemented")
 }
@@ -122,11 +128,15 @@ swap_buffer :: proc() {
 	panic("Platform not implemented")
 }
 
+/*
+	returns actual window size instead of framebuffer size
+	For web it returns canvas css size
+*/
 get_size :: proc() -> (width, height: i32) {
 	when gfx.PLATFORM == .DESKTOP {
 		return glfw.get_size()
 	} else when gfx.PLATFORM == .WEB {
-		// no impl yet
+		return web.get_window_size()
 	}
 
 	panic("Platform not implemented")

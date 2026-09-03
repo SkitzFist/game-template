@@ -3,8 +3,8 @@ package opengl
 
 import gl "vendor:OpenGL"
 
-textures_vert := #load("../../shaders/textures.vert")
-textures_frag := #load("../../shaders/textures.frag")
+textures_vert := #load("../../shaders/opengl/textures.vert")
+textures_frag := #load("../../shaders/opengl/textures.frag")
 texture_shader: u32
 
 texture_vao: u32
