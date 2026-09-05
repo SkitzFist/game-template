@@ -19,7 +19,6 @@ textures_init :: proc() {
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 	gl.EnableVertexAttribArray(2)
-	gl.EnableVertexAttribArray(3)
 
 	pointer: uintptr = 0
 
@@ -68,7 +67,7 @@ convert_format :: proc(engine_format: u32) -> gl.Enum {
 	panic("[WEBGL] unsupported pixel format")
 }
 
-load_texture :: proc(image_data: [^]u8, width, height: i32, format: u32) -> gl.Texture {
+load_texture :: proc(image_data: [^]u8, width, height: i32, format: u32) -> u32 {
 	texture := gl.CreateTexture()
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
@@ -102,7 +101,7 @@ load_texture :: proc(image_data: [^]u8, width, height: i32, format: u32) -> gl.T
 	// TODO allow for calling manually
 	gl.GenerateMipmap(gl.TEXTURE_2D)
 
-	return texture
+	return u32(texture)
 }
 
 unload_texture :: proc(texture: gl.Texture) {

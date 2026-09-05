@@ -2,8 +2,10 @@ package render
 
 import "vendor:stb/image"
 
+import "../assets"
 import gfx "../gfx_context"
 import gl "opengl"
+import webgl "webgl"
 
 //debug
 import "core:log"
@@ -66,12 +68,11 @@ get_next_free_index :: proc() -> Texture_Index {
 	panic("No unnoccupied texture slot, time to implement membuffer")
 }
 
-load_texture :: proc {
-	load_texture_path,
-	load_texture_file,
-}
 
-load_texture_path :: proc(path: cstring) -> Texture_Index {
+/*
+	Loads an image by file path. Will read width and height from image
+*/
+load_texture_by_path :: proc(path: cstring) -> Texture_Index {
 	when gfx.API == .OPENGL {
 		width, height, channels: i32
 		image.set_flip_vertically_on_load(1)
@@ -85,13 +86,42 @@ load_texture_path :: proc(path: cstring) -> Texture_Index {
 		format := texture_format_from_stb_channels(channels)
 		log.info("Image loaded:", path, width, height, format)
 
-		return load_texture_file(img_data, width, height, format)
+		return load_texture(string(path), img_data, width, height, format)
 	} else when gfx.API == .WEBGL {
 		return 0
 	}
 }
 
-load_texture_file :: proc(
+/*
+	Loads an image as a texture by asset name. Will read width and height from image
+*/
+load_texture_by_asset :: proc(asset_name: string) -> Texture_Index {
+	width, height, channels: i32
+	image.set_flip_vertically_on_load(1)
+
+	asset := assets.sprites[asset_name]
+	img_data := image.load_from_memory(
+		raw_data(asset[:]),
+		i32(len(asset)),
+		&width,
+		&height,
+		&channels,
+		0,
+	)
+	if img_data == nil {
+		log.error("Failed to load image:", asset_name, image.failure_reason())
+		panic("failed image load")
+	}
+	defer image.image_free(img_data)
+
+	format := texture_format_from_stb_channels(channels)
+
+	return load_texture(asset_name, img_data, width, height, format)
+}
+
+// Loads an image as a texture
+load_texture :: proc(
+	identifier: string,
 	data: [^]u8,
 	width, height: i32,
 	format: Texture_Format,
@@ -102,13 +132,14 @@ load_texture_file :: proc(
 	when gfx.API == .OPENGL {
 		texture_ids[index] = gl.load_texture(data, width, height, u32(format))
 	} else when gfx.API == .WEBGL {
-		//not implemented yet
+		texture_ids[index] = webgl.load_texture(data, width, height, u32(format))
 	}
 
 	texture_widths[index] = width
 	texture_heights[index] = height
 	texture_formats[index] = format
 
+	log.info("[TEXTURE] loaded:", identifier, width, height, format)
 	return index
 }
 
