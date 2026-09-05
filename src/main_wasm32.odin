@@ -3,6 +3,7 @@ package game
 
 import "base:runtime"
 
+import "assets"
 import gfx "gfx_context"
 import "input"
 import r "render"
@@ -18,6 +19,8 @@ web_context: runtime.Context
 main :: proc() {
 	context = init_default_context()
 	web_context = context
+
+	assets.init()
 
 	window.init()
 	input.init()
@@ -40,23 +43,16 @@ main :: proc() {
 
 	r.init()
 	r.attach_context(i32(window.width), i32(window.height), window_response)
+
+	wall = r.load_texture_by_asset("wall.jpg")
+	tex2 = r.load_texture_by_asset("textures2.png")
 }
 
 
 @(export)
 web_tick :: proc "c" (dt: f32) {
 	context = web_context
-
-	r.draw_begin(window.get_time())
-	r.clear_screen(r.BLACK)
-
-	r.set_blend_mode(.ADDITIVE)
-	r.draw_circle({window.width / 4, window.height / 4}, window.width / 4, r.YELLOW)
-	r.draw_circle({window.width / 2, window.height / 2}, window.width / 2, r.BLUE - {0, 0, 0, 100})
-
-	// runtime_tests_update(dt)
-
-	r.draw_end()
+	tick(dt)
 }
 
 @(export)

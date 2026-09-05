@@ -3,9 +3,11 @@ package render
 import tt "vendor:stb/truetype"
 
 import "core:fmt"
+import "core:log"
 import "core:math"
 import "core:strings"
 
+import "../assets"
 import gfx "../gfx_context"
 import "../util"
 
@@ -105,10 +107,7 @@ font_init :: proc() {
 	font_resources = make([dynamic]Font_Resource, 0, 5)
 	removed = make([dynamic]Font_Handle, 0, 0)
 
-	// TODO remove, temporary as web doens't support loading files yet
-	when gfx.API == .OPENGL {
-		DEFAULT_FONT = load_font("assets/fonts/roboto.ttf")
-	}
+	DEFAULT_FONT = load_font_by_asset("roboto.ttf")
 }
 
 // delete font resources
@@ -155,7 +154,30 @@ prepare_a_handle :: proc(
 	return handle, index
 }
 
-load_font :: proc(path: string, font_size: i32 = 32, type: Font_Type = .BITMAP) -> Font_Handle {
+load_font_by_path :: proc(
+	path: string,
+	font_size: i32 = 32,
+	type: Font_Type = .BITMAP,
+) -> Font_Handle {
+
+	font_data := assets.load_file(path, context.temp_allocator)
+	return load_font(path, font_data, font_size, type)
+}
+
+load_font_by_asset :: proc(
+	asset_name: string,
+	font_size: i32 = 32,
+	type: Font_Type = .BITMAP,
+) -> Font_Handle {
+	return load_font(asset_name, assets.fonts[asset_name], font_size, type)
+}
+
+load_font :: proc(
+	identifier: string,
+	font_data: []byte,
+	font_size: i32 = 32,
+	type: Font_Type = .BITMAP,
+) -> Font_Handle {
 	assert(
 		len(font_handles) < int(max(Font_Index)),
 		"Max allowed fonts 255, please unload some or rethink your life choices",
@@ -172,7 +194,6 @@ load_font :: proc(path: string, font_size: i32 = 32, type: Font_Type = .BITMAP) 
 		)
 	}
 
-	font_data := util.load_file(path, context.temp_allocator)
 	atlas_size: i32 = 512
 	bitmap := make([]u8, atlas_size * atlas_size, context.temp_allocator)
 
@@ -189,17 +210,20 @@ load_font :: proc(path: string, font_size: i32 = 32, type: Font_Type = .BITMAP) 
 	)
 
 	if result <= 0 {
-		panic(fmt.aprint("Could not bake font", path, "Result:", result))
+		panic(fmt.aprint("Could not bake font", identifier, "Result:", result))
 	}
 
 	font_resources[index].atlas_height = atlas_size
 	font_resources[index].base_height = font_size
-	font_resources[index].texture_index = load_texture_file(
+	font_resources[index].texture_index = load_texture(
+		identifier,
 		raw_data(bitmap[:]),
 		atlas_size,
 		atlas_size,
 		.GRAY,
 	)
+
+	log.infof("[FONT] loaded: %v at font size: %v", identifier, font_size)
 
 	return handle
 }

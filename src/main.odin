@@ -1,12 +1,14 @@
 #+build linux, windows
 package game
 
+import "assets"
 import "input"
 import r "render"
 import "window"
 
 main :: proc() {
 	context = init_default_context()
+	assets.init()
 
 	window.init()
 	input.init()
@@ -18,8 +20,9 @@ main :: proc() {
 
 	r.init()
 
-	wall = r.load_texture("assets/sprites/wall.jpg")
-	tex2 = r.load_texture("assets/sprites/textures2.png")
+
+	wall = r.load_texture_by_asset("wall.jpg")
+	tex2 = r.load_texture_by_asset("textures2.png")
 
 	prev, curr: f64 = window.get_time(), 0.0
 	dt: f64

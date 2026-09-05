@@ -32,7 +32,7 @@ Test :: enum {
 	BLEND_MODES,
 }
 
-test: Test = .BLEND_MODES
+test: Test = .ALL_PRIMITIVES
 
 text := "Lorem ipsum dolor sit amet consectetur adipiscing elit.\n Quisque faucibus ex sapien vitae pellentesque sem placerat.\n In id cursus mi pretium tellus duis convallis.\n Tempus leo eu aenean sed diam urna tempor.\n Pulvinar vivamus fringilla lacus nec metus bibendum egestas.\n Iaculis massa nisl malesuada lacinia integer nunc posuere.\n Ut hendrerit semper vel class aptent taciti sociosqu.\n Ad litora torquent per conubia nostra inceptos himenaeos.\n"
 

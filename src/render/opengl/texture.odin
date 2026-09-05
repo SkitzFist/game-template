@@ -19,7 +19,6 @@ textures_init :: proc() {
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 	gl.EnableVertexAttribArray(2)
-	gl.EnableVertexAttribArray(3)
 
 	pointer: uintptr = 0
 

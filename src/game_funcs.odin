@@ -4,10 +4,13 @@ import "base:runtime"
 import "core:log"
 import "core:mem"
 
+import "assets"
 import gfx "gfx_context"
 import "input"
 import r "render"
 import "window"
+
+// TODO: This entire file needs to be refactored
 
 tracking_allocator: mem.Tracking_Allocator
 arena: mem.Arena
@@ -65,6 +68,9 @@ tick :: proc(dt: f32) {
 
 shutdown :: proc() {
 	log.info("[MAIN] shutting down...")
+
+	assets.destroy()
+	log.info("[MAIN] Assets destroyed sucessfully")
 
 	r.shutdown()
 	log.info("[MAIN] Renderer shut down successfully")
