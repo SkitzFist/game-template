@@ -1,6 +1,7 @@
 #+build js wasm32
 package web
 
+import "base:runtime"
 import "core:fmt"
 import "core:sys/wasm/js"
 import "core:time"
@@ -16,12 +17,16 @@ canvas_name: string
 web_config: gfx.WebGl_Config
 on_framebuffer_resized_callback: proc(width, height: i32)
 
+DEFAULT_CONTEXT: runtime.Context
+
 create :: proc(
 	title: cstring,
 	config: gfx.Config,
 	on_framebuffer_resized: proc(width, height: i32),
 	fullscreen: bool = true,
 ) -> gfx.Window_Response {
+	DEFAULT_CONTEXT = context
+
 	web_config = config.backend_config.(gfx.WebGl_Config)
 	canvas_name = web_config.canvas_name
 
@@ -45,7 +50,7 @@ create :: proc(
 	js.add_window_event_listener(.Resize, nil, on_resize, false)
 
 	time_start = time.now()
-	return {}
+	return gfx.Window_WebGl_Response{}
 }
 
 shutdown :: proc() {
@@ -126,10 +131,8 @@ fill_aspect :: proc(container_width, container_height, aspect_ratio: f32) -> (wi
 }
 
 resize_frame_buffer :: proc(w, h: i32) {
-
 	js.set_element_key_f64(canvas_name, "width", f64(w))
 	js.set_element_key_f64(canvas_name, "height", f64(h))
-	gl.Viewport(0, 0, w, h)
 }
 
 get_time :: proc() -> f64 {
@@ -153,7 +156,8 @@ get_window_size :: proc() -> (width, height: i32) {
 
 // callbacks
 on_resize :: proc(event: js.Event) {
+	context = DEFAULT_CONTEXT
+
 	w, h := calculate_layout()
-	fmt.println("print:", w, h)
 	on_framebuffer_resized_callback(w, h)
 }

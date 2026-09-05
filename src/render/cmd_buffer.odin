@@ -1,14 +1,16 @@
 package render
 
-import gl "opengl"
-
 import "core:log"
+
 
 import gfx "../gfx_context"
 import "../util"
+import gl "opengl"
+import webgl "webgl"
 
 /*
 	NOTE: All cmd buffer handles must implement cmd type at first bit shift
+	TODO: shoudl implemen skz-studio util lib for handling Bit_Field
 */
 
 @(private = "file")
@@ -86,6 +88,8 @@ draw_command_buffer :: proc() {
 			vertex_count := i32(count) * 3
 			when gfx.API == .OPENGL {
 				gl.draw_primitives(vertex_count, vertex_last_drawn)
+			} else when gfx.API == .WEBGL {
+				webgl.draw_primitives(vertex_count, vertex_last_drawn)
 			}
 			vertex_last_drawn += vertex_count
 
@@ -99,7 +103,10 @@ draw_command_buffer :: proc() {
 			vertex_count := i32(count) * 3
 			when gfx.API == .OPENGL {
 				gl.draw_textures(texture_id(texture_index), vertex_count, vertex_last_drawn)
+			} else when gfx.API == .WEBGL {
+				webgl.draw_textures(texture_id(texture_index), vertex_count, vertex_last_drawn)
 			}
+
 			vertex_last_drawn += vertex_count
 
 		case .TEXT:
@@ -112,6 +119,8 @@ draw_command_buffer :: proc() {
 			vertex_count := i32(count) * 3
 			when gfx.API == .OPENGL {
 				gl.draw_text(texture_id(texture_index), vertex_count, vertex_last_drawn)
+			} else when gfx.API == .WEBGL {
+				webgl.draw_text(texture_id(texture_index), vertex_count, vertex_last_drawn)
 			}
 			vertex_last_drawn += vertex_count
 
@@ -124,6 +133,8 @@ draw_command_buffer :: proc() {
 
 			when gfx.API == .OPENGL {
 				gl.set_blend_mode(blend_mode)
+			} else when gfx.API == .WEBGL {
+				webgl.set_blend_mode(blend_mode)
 			}
 
 		}

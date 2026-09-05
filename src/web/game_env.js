@@ -2,7 +2,8 @@ const wasmUrl = "./game.wasm"
 
 function startGame(wasm) {
   const odin = wasm.exports
-  odin.web_init()
+
+  odin._start()
 
   if (!odin.web_tick) {
     console.error("web_tick not available")

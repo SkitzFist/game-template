@@ -21,7 +21,7 @@ if [ $PLATFORM == "WEB" ]; then
     cp src/web/game.html $OUT_DIR/game.html
     cp "${ODIN_ROOT}/core/sys/wasm/js/odin.js" $OUT_DIR/odin.js
     cp src/web/game_env.js $OUT_DIR/game_env.js
-
+    cp -r ./assets/. ${OUT_DIR}/assets/
     echo "Build created in ${OUT_DIR}"
 elif [ $PLATFORM == "DESKTOP" ]; then
     OUT_DIR="build/desktop"
@@ -33,7 +33,9 @@ elif [ $PLATFORM == "DESKTOP" ]; then
         -define:PLATFORM=DESKTOP \
         -define:RENDER_API=OPENGL
 
+    cp -r ./assets/. ${OUT_DIR}/assets/
     echo "Build created in ${OUT_DIR}"
 fi
+
 
 ./run.sh $PLATFORM
