@@ -2,6 +2,9 @@ package render
 
 import gfx "../gfx_context"
 import gl "opengl"
+import "webgl"
+
+import "core:fmt"
 
 // ---- STRUCTS ---- //
 
@@ -26,7 +29,7 @@ vertexes: [dynamic]Vertex
 count: u32
 
 @(private = "file")
-is_dirty: bool
+is_dirty: bool = false
 
 vertex_last_drawn: i32
 
@@ -49,7 +52,7 @@ vertex_upload :: proc() {
 		when gfx.API == .OPENGL {
 			gl.gpu_data_upload_vertex(Vertex, raw_data(vertexes[:]), count)
 		} else when gfx.API == .WEBGL {
-			// no impl yet
+			webgl.gpu_data_upload_vertex(Vertex, raw_data(vertexes[:]), count)
 		}
 
 		is_dirty = false

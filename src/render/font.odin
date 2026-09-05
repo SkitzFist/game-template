@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:math"
 import "core:strings"
 
+import gfx "../gfx_context"
 import "../util"
 
 /*
@@ -71,10 +72,10 @@ START_CHAR: i32 : 32
 
 // ---- RESOURCE ---- //
 Font_Resource :: struct {
-	texture_index: Texture_Index,
-	atlas_height:  i32,
 	baked_chars:   [NUM_CHAR]tt.bakedchar,
+	atlas_height:  i32,
 	base_height:   i32,
+	texture_index: Texture_Index,
 }
 
 // Font style. Will later add bold, italien etc, should be introduced as a bit_set maybe, or just a handle
@@ -88,6 +89,8 @@ DEFAULT_FONT_STYLE: Font_Style : {DEFAULT_FONT_SIZE, WHITE}
 
 // ---- DATA ---- //
 font_handles: [dynamic]Font_Handle
+
+// TODO: convert to SOA
 font_resources: [dynamic]Font_Resource
 @(private = "file")
 removed: [dynamic]Font_Handle
@@ -102,7 +105,10 @@ font_init :: proc() {
 	font_resources = make([dynamic]Font_Resource, 0, 5)
 	removed = make([dynamic]Font_Handle, 0, 0)
 
-	DEFAULT_FONT = load_font("assets/fonts/roboto.ttf")
+	// TODO remove, temporary as web doens't support loading files yet
+	when gfx.API == .OPENGL {
+		DEFAULT_FONT = load_font("assets/fonts/roboto.ttf")
+	}
 }
 
 // delete font resources
