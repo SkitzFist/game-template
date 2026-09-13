@@ -38,7 +38,7 @@ create :: proc(
 		if !success {
 			panic("[WINDOW] could not create window")
 		}
-		w, h := glfw.get_size()
+		w, h := glfw.get_frame_buffer_size()
 		width, height = f32(w), f32(h)
 		return response
 	} else when gfx.PLATFORM == .WEB {

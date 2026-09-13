@@ -12,7 +12,6 @@ import "../../input"
 
 import "core:unicode/utf8"
 
-
 time_start: time.Time
 canvas_id: string
 
@@ -207,6 +206,7 @@ key_down_callback :: proc(event: js.Event) {
 		input.on_char(char)
 	}
 
+	if event.key.repeat {return}
 	if event.key.code not_in key_lookup {return}
 
 	input.handle_on_press(key_lookup[event.key.code])
@@ -216,7 +216,6 @@ key_up_callback :: proc(event: js.Event) {
 	context = DEFAULT_CONTEXT
 
 	if event.key.code not_in key_lookup {return}
-	if event.key.repeat {return}
 
 	input.handle_on_release(key_lookup[event.key.code])
 }
@@ -240,7 +239,6 @@ is_mouse_inside_canvas :: proc(event: js.Event) -> bool {
 		  to differentiate between mouse, touch and pen.
 */
 pointer_move_callback :: proc(event: js.Event) {
-	fmt.println("input: on char:", codepoint)
 	context = DEFAULT_CONTEXT
 
 	rect := js.get_bounding_client_rect(canvas_id)
