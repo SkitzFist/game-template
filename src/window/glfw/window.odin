@@ -143,7 +143,11 @@ swap_buffer :: proc() {
 }
 
 get_size :: proc() -> (width, height: i32) {
-	return width, height
+	return glfw.GetWindowSize(window_handle)
+}
+
+get_frame_buffer_size :: proc() -> (width, height: i32) {
+	return glfw.GetFramebufferSize(window_handle)
 }
 
 print_frame_size :: proc() {
