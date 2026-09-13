@@ -46,4 +46,3 @@ keyboard_post_frame :: proc() {
 	released = {}
 	has_char = false
 }
-

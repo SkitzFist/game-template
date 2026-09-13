@@ -13,7 +13,6 @@ web_context: runtime.Context
 
 /*
 	TODO: Add file load support (must in order to add texture and font)
-	TODO: Add input support for web
 */
 
 main :: proc() {
