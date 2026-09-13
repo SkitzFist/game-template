@@ -9,6 +9,8 @@ held: bit_set[Mouse_Button]
 @(private = "file")
 released: bit_set[Mouse_Button]
 
+
+// TODO convert to [2]f32
 mouse_x, mouse_y: f32
 
 handle_mouse_pos :: proc(x, y: f32) {
@@ -50,4 +52,3 @@ mouse_post_frame :: proc() {
 	pressed = {}
 	released = {}
 }
-

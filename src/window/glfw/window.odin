@@ -95,6 +95,7 @@ create :: proc(
 
 	glfw.SetKeyCallback(window_handle, key_callback)
 	glfw.SetCharCallback(window_handle, char_callback)
+
 	glfw.SetCursorPosCallback(window_handle, cursor_pos_callback)
 	glfw.SetMouseButtonCallback(window_handle, mouse_button_callback)
 	glfw.SetScrollCallback(window_handle, mouse_scroll_callback)
