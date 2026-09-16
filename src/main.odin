@@ -3,34 +3,27 @@ package game
 
 import "assets"
 
+import str "stride:api"
+
 main :: proc() {
 	context = init_default_context()
 	assets.init()
 
-	// window.init()
-	// input.init()
+	str.create(PROJECT_NAME, CONFIG)
 
-	// window_response := window.create(PROJECT_NAME, r.context_config())
+	wall := str.load_texture_from_data("wall", assets.sprites["wall.jpg"])
+	tex2 := str.load_texture_from_data("textures2", assets.sprites["textures2.png"])
 
-	// r.attach_context(i32(window.width), i32(window.height), window_response)
-	// append(&window.resize_callbacks, r.on_frame_buffer_size_changed)
+	prev, curr: f64 = str.get_time(), 0.0
+	dt: f64
+	for !str.should_window_close() {
+		curr = str.get_time()
+		dt = curr - prev
+		prev = curr
 
-	// r.init()
+		str.poll_events()
+		tick(f32(dt))
+	}
 
-
-	// wall = r.load_texture_by_asset("wall.jpg")
-	// tex2 = r.load_texture_by_asset("textures2.png")
-
-	// prev, curr: f64 = window.get_time(), 0.0
-	// dt: f64
-	// for !window.should_close() {
-	// 	curr = window.get_time()
-	// 	dt = curr - prev
-	// 	prev = curr
-
-	// 	window.poll_events()
-	// 	tick(f32(dt))
-	// }
-
-	// shutdown()
+	str.shutdown()
 }
