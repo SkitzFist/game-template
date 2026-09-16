@@ -1,0 +1,3 @@
+[submodule "skz/stride"]
+	path = skz/stride
+	url = https://github.com/skz-studio/stride.git
